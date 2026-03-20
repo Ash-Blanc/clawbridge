@@ -1,0 +1,99 @@
+---
+title: Real-World Use Cases
+description: "Discover how the community builds production-ready OpenClaw agents"
+---
+
+# Real-World OpenClaw Agents
+
+The OpenClaw architecture combined with the `clawbridge` meta-framework allows you to build highly specialized, autonomous agents that integrate into your existing workflows.
+
+Here are three of the most popular agent architectures seen in the real world:
+
+## 1. The DevOps / SRE Agent
+**Goal:** Automate infrastructure monitoring and simple remediation.
+**Gateways:** Slack
+**Storage:** PostgreSQL (to remember recurring incidents and team member preferences)
+
+### Setup
+The SRE Agent lives in the team's `#alerts` Slack channel. When a PagerDuty alert fires, the agent uses its skills to query Datadog, check server logs, and even execute safe remediation scripts.
+
+```yaml agents/sre_bot.yaml
+name: OpsBot
+description: Site Reliability Engineering Assistant
+personality: You are a highly technical, precise, and cautious DevOps engineer. Do not guess; always check logs.
+model:
+  provider: openai
+  model_id: gpt-4o
+storage:
+  enabled: true
+  type: postgres
+  db_url: postgresql://user:pass@db:5432/opsbot
+channels:
+  - type: slack
+    token_env: SLACK_BOT_TOKEN
+```
+
+**Skill:** `skills/aws_manager/tools.py`
+```python
+def restart_ec2_instance(instance_id: str) -> str:
+    """Restarts a specific EC2 instance. Use only when explicitly authorized."""
+    # ... boto3 logic ...
+    return f"Successfully issued restart command to {instance_id}."
+```
+
+## 2. The Crypto / Financial Analyst
+**Goal:** Monitor markets, read news, and track a personal portfolio.
+**Gateways:** WhatsApp
+**Knowledge Base:** LanceDB (ingesting whitepapers and SEC filings)
+
+### Setup
+This agent acts as a personal financial advisor on WhatsApp. It can search the web for the latest token news, query a portfolio API, and RAG over a database of ingested PDFs.
+
+```yaml agents/crypto_analyst.yaml
+name: AlphaTracker
+description: Personal Crypto Analyst
+personality: You are a sharp financial analyst. Always provide sources for your claims.
+model:
+  provider: anthropic
+  model_id: claude-3-5-sonnet
+knowledge:
+  enabled: true
+  type: lancedb
+  table_name: crypto_research
+channels:
+  - type: whatsapp
+    token_env: WHATSAPP_TOKEN
+```
+
+**Skill:** `skills/portfolio/tools.py`
+```python
+def get_portfolio_balance(wallet_address: str) -> dict:
+    """Fetches the current token balances for a given wallet address."""
+    # ... web3 or API logic ...
+    return {"ETH": 1.5, "USDC": 4200.00}
+```
+
+## 3. The Personal Researcher
+**Goal:** Automate literature reviews and note-taking.
+**Gateways:** Local CLI or Web Interface
+**Knowledge Base:** PgVector
+
+### Setup
+A strictly local agent that ingests hundreds of research papers into a vector database, then uses skills to write summarized notes into the user's Obsidian or Notion workspace.
+
+```yaml agents/researcher.yaml
+name: Scholar
+personality: You are an academic researcher. You synthesize information accurately without hallucination.
+knowledge:
+  enabled: true
+  type: pgvector
+  db_url: postgresql://localhost/vector
+```
+
+**Skill:** `skills/notion_writer/tools.py`
+```python
+def create_research_note(title: str, content: str) -> str:
+    """Creates a new page in the user's Notion research database."""
+    # ... Notion API logic ...
+    return f"Note '{title}' successfully created."
+```

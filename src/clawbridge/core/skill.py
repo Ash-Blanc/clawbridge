@@ -58,48 +58,95 @@ class ClawSkill(BaseModel):
     source_path: Path | None = None
 
     @classmethod
-    def from_skill_md(cls, path: Path) -> ClawSkill:
-        """Parse a SKILL.md file into a ClawSkill."""
+    def from_dir(cls, path: Path) -> ClawSkill:
+        """Parse a skill directory into a ClawSkill."""
         skill_file = path / "SKILL.md" if path.is_dir() else path
-        if not skill_file.exists():
-            raise FileNotFoundError(f"SKILL.md not found at {skill_file}")
-
-        content = skill_file.read_text(encoding="utf-8")
-        frontmatter, body = cls._parse_frontmatter(content)
-
-        # Discover dynamic callables if path is a directory
+        
+        # Discover dynamic callables first
         callables: dict[str, Any] = {}
         if path.is_dir():
             callables = cls._load_callables_from_dir(path)
 
-        # Parse tools from frontmatter
-        raw_tools = frontmatter.pop("tools", []) or []
+        # If SKILL.md exists, use it as the source of truth
+        if skill_file.exists():
+            content = skill_file.read_text(encoding="utf-8")
+            frontmatter, body = cls._parse_frontmatter(content)
+            
+            raw_tools = frontmatter.pop("tools", []) or []
+            tools = []
+            for t in raw_tools:
+                params = [
+                    ToolParameter(**p) for p in (t.get("parameters") or [])
+                ]
+                tools.append(
+                    ToolDefinition(
+                        name=t["name"],
+                        description=t.get("description", ""),
+                        parameters=params,
+                        callable=callables.get(t["name"])
+                    )
+                )
+
+            return cls(
+                name=frontmatter.get("name", path.name),
+                description=frontmatter.get("description", ""),
+                category=frontmatter.get("category", "general"),
+                version=frontmatter.get("version", "1.0.0"),
+                author=frontmatter.get("author", ""),
+                tags=frontmatter.get("tags", []),
+                instructions=body.strip(),
+                tools=tools,
+                metadata=frontmatter,
+                source_path=path,
+            )
+        
+        # Otherwise, auto-generate from Python callables
         tools = []
-        for t in raw_tools:
-            params = [
-                ToolParameter(**p) for p in (t.get("parameters") or [])
-            ]
+        import inspect
+        from typing import get_type_hints
+        
+        for name, func in callables.items():
+            doc = inspect.getdoc(func) or f"Tool for {name}."
+            hints = get_type_hints(func)
+            sig = inspect.signature(func)
+            
+            params = []
+            for param_name, param in sig.parameters.items():
+                if param_name == "return":
+                    continue
+                param_type = hints.get(param_name, Any)
+                type_name = getattr(param_type, "__name__", str(param_type))
+                required = param.default is inspect.Parameter.empty
+                params.append(
+                    ToolParameter(
+                        name=param_name,
+                        type=type_name,
+                        required=required,
+                        description=f"Parameter {param_name}"
+                    )
+                )
+            
             tools.append(
                 ToolDefinition(
-                    name=t["name"],
-                    description=t.get("description", ""),
+                    name=name,
+                    description=doc.strip().split("\n")[0], # First line of docstring
                     parameters=params,
-                    callable=callables.get(t["name"])
+                    callable=func
                 )
             )
 
         return cls(
-            name=frontmatter.get("name", path.stem),
-            description=frontmatter.get("description", ""),
-            category=frontmatter.get("category", "general"),
-            version=frontmatter.get("version", "1.0.0"),
-            author=frontmatter.get("author", ""),
-            tags=frontmatter.get("tags", []),
-            instructions=body.strip(),
+            name=path.name,
+            description="Auto-generated from Python callables.",
+            instructions="Use the provided tools as necessary.",
             tools=tools,
-            metadata=frontmatter,
             source_path=path,
         )
+
+    @classmethod
+    def from_skill_md(cls, path: Path) -> ClawSkill:
+        """Legacy alias."""
+        return cls.from_dir(path)
 
     @staticmethod
     def _load_callables_from_dir(path: Path) -> dict[str, Any]:

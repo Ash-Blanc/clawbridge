@@ -44,6 +44,7 @@
       {
         "group": "Examples",
         "pages": [
+          "docs/examples/real-world-usecases",
           "docs/examples/sales-agent"
         ]
       }

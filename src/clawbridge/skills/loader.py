@@ -17,24 +17,24 @@ class SkillLoader:
         ]
 
     def discover(self) -> list[Path]:
-        """Find all directories containing SKILL.md."""
+        """Find all directories containing SKILL.md, tools.py, or main.py."""
         found: list[Path] = []
         for base in self.search_paths:
             if not base.exists():
                 continue
-            # Direct SKILL.md
-            if (base / "SKILL.md").exists():
+            # Direct match
+            if any((base / f).exists() for f in ["SKILL.md", "tools.py", "main.py"]):
                 found.append(base)
                 continue
             # Subdirectories
             for child in sorted(base.iterdir()):
-                if child.is_dir() and (child / "SKILL.md").exists():
+                if child.is_dir() and any((child / f).exists() for f in ["SKILL.md", "tools.py", "main.py"]):
                     found.append(child)
         return found
 
     def load_all(self) -> list[ClawSkill]:
         """Load all discovered skills."""
-        return [ClawSkill.from_skill_md(p) for p in self.discover()]
+        return [ClawSkill.from_dir(p) for p in self.discover()]
 
     def load_by_name(self, name: str) -> ClawSkill | None:
         """Load a specific skill by name."""

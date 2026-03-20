@@ -1,15 +1,46 @@
 ---
 title: Building Skills
-description: "How to create drag-and-drop OpenClaw skills"
+description: "How to create Code-First OpenClaw skills instantly"
 ---
 
 # Building Skills
 
-In OpenClaw and `clawbridge`, a "skill" is a portable package that grants an AI agent new capabilities. It consists of human-readable documentation (`SKILL.md`) and the underlying Python logic (`tools.py`).
+In OpenClaw and `clawbridge`, a "skill" is a portable package that grants an AI agent new capabilities. 
 
-## The Skill Structure
+To improve the Developer Experience (DX), `clawbridge` supports a **Code-First (Zero Config)** approach. You do not need to write complex YAML or Markdown to define a skill. You simply write Python.
 
-Create a folder in the `skills/` directory:
+## 1. Code-First Skills (Recommended)
+
+To create a new skill, just create a folder inside the `skills/` directory and add a `tools.py` file.
+
+```text
+skills/
+└── calculator/
+    └── tools.py
+```
+
+### The `tools.py` File
+
+Simply write standard Python functions, ensuring you include **type hints** and a **docstring**.
+
+```python skills/calculator/tools.py
+def add_numbers(a: float, b: float) -> str:
+    """
+    Adds two numbers together.
+    Use this skill whenever a customer asks for a math calculation.
+    """
+    result = a + b
+    return f"The sum of {a} and {b} is {result}."
+```
+
+### How it works natively:
+When you run `clawbridge dev`, the framework inspects your `tools.py` file. It automatically extracts the function signature, parses the type hints into a JSON schema, reads the docstring for the description, and dynamically mounts it as a native Agno `Tool` attached to your Agent.
+
+Zero boilerplate. Pure Python.
+
+## 2. The `SKILL.md` Standard (Legacy/Portable)
+
+If you are importing skills from the broader OpenClaw community, they often come with a `SKILL.md` file. `clawbridge` natively supports this format as well.
 
 ```text
 skills/
@@ -18,47 +49,21 @@ skills/
     └── tools.py
 ```
 
-### 1. The `SKILL.md` (Manifest & Prompt)
-
-This file contains YAML frontmatter defining the tools and Markdown body defining the instructions for the agent.
-
+**`SKILL.md`**:
 ```markdown
 ---
-name: calculator
-description: A basic math skill.
-version: 1.0.0
-tools:
-  - name: add_numbers
-    description: Adds two numbers together.
-    parameters:
-      - name: a
-        type: float
-        required: true
-      - name: b
-        type: float
-        required: true
+name: add_numbers
+description: Adds two numbers together.
+parameters:
+  - name: a
+    type: float
+    required: true
+  - name: b
+    type: float
+    required: true
 ---
 # Skill: Calculator
 You have access to a highly accurate calculator. Always use this skill when asked to perform arithmetic instead of guessing the answer.
 ```
 
-### 2. The `tools.py` (The Logic)
-
-This file contains the actual Python code. The function names must match the `name` defined in the YAML frontmatter.
-
-```python
-def add_numbers(a: float, b: float) -> str:
-    """Adds two numbers together."""
-    result = a + b
-    return f"The sum of {a} and {b} is {result}."
-```
-
-## How It Works
-
-When `clawbridge dev` boots up (or when you call `compile_to_agno`), the framework:
-1. Parses `SKILL.md`.
-2. Reads `tools.py` dynamically.
-3. Automatically maps the `add_numbers` Python function to the tool definition defined in the YAML.
-4. Wraps it natively into an Agno `Tool` and appends the Markdown instructions to the Agent's system prompt.
-
-You never have to manually `import` or wire up the skill in your agent definition. If it is in the `skills/` folder, the agent can use it!
+If `clawbridge` detects a `SKILL.md` file, it will use the YAML frontmatter as the source of truth for the tool schema, and it will inject the Markdown body directly into the agent's system prompt. It will still automatically mount the matching Python function from `tools.py`.
