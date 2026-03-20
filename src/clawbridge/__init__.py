@@ -17,7 +17,7 @@ Usage:
     bridge = ClawBridge(agent_def, backend="agentica")
 """
 
-from clawbridge.bridge import ClawBridge, create_agent
+from clawbridge.bridge import ClawBridge, compile_to_agno, create_agent
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.memory import ClawMemory
 from clawbridge.core.skill import ClawSkill
@@ -41,6 +41,7 @@ __all__ = [
     "ModelConfig",
     "ToolDefinition",
     "ToolParameter",
+    "compile_to_agno",
     "create_agent",
 ]
 

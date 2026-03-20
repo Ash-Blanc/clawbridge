@@ -1,0 +1,5 @@
+name: My ClawBridge App
+description: A multi-agent AI project.
+server:
+  host: 127.0.0.1
+  port: 8000

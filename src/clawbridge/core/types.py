@@ -60,6 +60,56 @@ class ToolDefinition(BaseModel):
     auto_invoke: bool = True
 
 
+class StorageType(StrEnum):
+    IN_MEMORY = "in_memory"
+    SQLITE = "sqlite"
+    POSTGRES = "postgres"
+
+
+class StorageConfig(BaseModel):
+    """Configuration for agent database/storage."""
+    
+    enabled: bool = False
+    type: StorageType = StorageType.SQLITE
+    db_url: str = "tmp/agent.db"  # Used for sqlite or postgres
+
+
+class VectorDbType(StrEnum):
+    LANCEDB = "lancedb"
+    PGVECTOR = "pgvector"
+
+
+class KnowledgeConfig(BaseModel):
+    """Configuration for vector knowledge bases."""
+    
+    enabled: bool = False
+    type: VectorDbType = VectorDbType.LANCEDB
+    db_url: str = "tmp/lancedb"
+    table_name: str = "agent_knowledge"
+    # Will typically contain paths or URLs to ingest
+    sources: list[str] = Field(default_factory=list)
+
+
+class ChannelType(StrEnum):
+    SLACK = "slack"
+    WHATSAPP = "whatsapp"
+    DISCORD = "discord"
+
+
+class ChannelConfig(BaseModel):
+    """Configuration for messaging interfaces (gateways)."""
+    
+    type: ChannelType
+    token_env: str  # The environment variable holding the auth token
+    bot_id_env: str | None = None
+    verification_token_env: str | None = None
+
+    @property
+    def token(self) -> str | None:
+        import os
+        return os.environ.get(self.token_env)
+
+
 class MemoryConfig(BaseModel):
     """Memory / persistence configuration."""
 

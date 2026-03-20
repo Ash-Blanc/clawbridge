@@ -67,6 +67,11 @@ class ClawSkill(BaseModel):
         content = skill_file.read_text(encoding="utf-8")
         frontmatter, body = cls._parse_frontmatter(content)
 
+        # Discover dynamic callables if path is a directory
+        callables: dict[str, Any] = {}
+        if path.is_dir():
+            callables = cls._load_callables_from_dir(path)
+
         # Parse tools from frontmatter
         raw_tools = frontmatter.pop("tools", []) or []
         tools = []
@@ -79,6 +84,7 @@ class ClawSkill(BaseModel):
                     name=t["name"],
                     description=t.get("description", ""),
                     parameters=params,
+                    callable=callables.get(t["name"])
                 )
             )
 
@@ -94,6 +100,31 @@ class ClawSkill(BaseModel):
             metadata=frontmatter,
             source_path=path,
         )
+
+    @staticmethod
+    def _load_callables_from_dir(path: Path) -> dict[str, Any]:
+        """Attempt to load python callables from main.py or tools.py."""
+        import importlib.util
+        import sys
+        
+        callables = {}
+        for py_file in ["tools.py", "main.py"]:
+            file_path = path / py_file
+            if file_path.exists():
+                module_name = f"skill_module_{path.name}_{py_file.split('.')[0]}"
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                if spec and spec.loader:
+                    mod = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = mod
+                    spec.loader.exec_module(mod)
+                    
+                    # Extract callables
+                    for name in dir(mod):
+                        if not name.startswith("_"):
+                            obj = getattr(mod, name)
+                            if callable(obj):
+                                callables[name] = obj
+        return callables
 
     @staticmethod
     def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:

@@ -1,0 +1,46 @@
+---
+title: Memory & Storage
+description: "How to configure native Agno memory and vector knowledge bases"
+---
+
+# Memory & Storage
+
+`clawbridge` delegates memory management entirely to Agno's powerful native `Db` abstractions. You do not need to manage JSON files or manually append conversation history to your prompts.
+
+## Storage Configuration
+
+In your agent's YAML definition (`agents/my-agent.yaml`), you can define the storage backend using the `storage` block.
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: my-agent-memory.db
+```
+
+### Supported Storage Types
+
+- `in_memory`: Uses `agno.db.in_memory.InMemoryDb`. Good for testing, memory is lost on restart.
+- `sqlite`: Uses `agno.db.sqlite.SqliteDb`. Excellent for local, persistent user sessions.
+- `postgres`: Uses `agno.db.postgres.PostgresDb`. The standard for production.
+
+When you configure storage, `clawbridge` automatically sets `add_history_to_context: true` on the compiled Agno agent.
+
+## Knowledge Bases (RAG)
+
+You can give your agents access to vast amounts of data using the `knowledge` configuration block.
+
+```yaml
+knowledge:
+  enabled: true
+  type: lancedb
+  db_url: tmp/lancedb
+  table_name: company_docs
+  sources:
+    - "https://docs.agno.com"
+```
+
+When configured, `clawbridge` will compile an Agno `Knowledge` object, utilizing the `OpenAIEmbedder` and the specified vector database (`lancedb` or `pgvector`), and automatically ingest any HTTP sources listed.
+
+### The `knowledge/` Directory
+*Coming Soon:* `clawbridge dev` will soon automatically ingest any PDFs or Markdown files dropped into the root `knowledge/` directory into your agent's vector database.

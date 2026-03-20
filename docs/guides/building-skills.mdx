@@ -1,0 +1,64 @@
+---
+title: Building Skills
+description: "How to create drag-and-drop OpenClaw skills"
+---
+
+# Building Skills
+
+In OpenClaw and `clawbridge`, a "skill" is a portable package that grants an AI agent new capabilities. It consists of human-readable documentation (`SKILL.md`) and the underlying Python logic (`tools.py`).
+
+## The Skill Structure
+
+Create a folder in the `skills/` directory:
+
+```text
+skills/
+└── calculator/
+    ├── SKILL.md
+    └── tools.py
+```
+
+### 1. The `SKILL.md` (Manifest & Prompt)
+
+This file contains YAML frontmatter defining the tools and Markdown body defining the instructions for the agent.
+
+```markdown
+---
+name: calculator
+description: A basic math skill.
+version: 1.0.0
+tools:
+  - name: add_numbers
+    description: Adds two numbers together.
+    parameters:
+      - name: a
+        type: float
+        required: true
+      - name: b
+        type: float
+        required: true
+---
+# Skill: Calculator
+You have access to a highly accurate calculator. Always use this skill when asked to perform arithmetic instead of guessing the answer.
+```
+
+### 2. The `tools.py` (The Logic)
+
+This file contains the actual Python code. The function names must match the `name` defined in the YAML frontmatter.
+
+```python
+def add_numbers(a: float, b: float) -> str:
+    """Adds two numbers together."""
+    result = a + b
+    return f"The sum of {a} and {b} is {result}."
+```
+
+## How It Works
+
+When `clawbridge dev` boots up (or when you call `compile_to_agno`), the framework:
+1. Parses `SKILL.md`.
+2. Reads `tools.py` dynamically.
+3. Automatically maps the `add_numbers` Python function to the tool definition defined in the YAML.
+4. Wraps it natively into an Agno `Tool` and appends the Markdown instructions to the Agent's system prompt.
+
+You never have to manually `import` or wire up the skill in your agent definition. If it is in the `skills/` folder, the agent can use it!

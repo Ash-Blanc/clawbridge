@@ -33,11 +33,20 @@ def main() -> None:
     skills_p = sub.add_parser("skills", help="List discovered skills")
     skills_p.add_argument("--dir", type=Path, default=Path("./skills"))
 
+    # ── dev ──
+    dev_p = sub.add_parser("dev", help="Start the local development server (Next.js style)")
+    dev_p.add_argument("--host", default="127.0.0.1")
+    dev_p.add_argument("--port", type=int, default=8000)
+
     # ── serve ──
     serve_p = sub.add_parser("serve", help="Serve agent as HTTP API")
     serve_p.add_argument("--backend", default="agno")
     serve_p.add_argument("--port", type=int, default=8000)
     serve_p.add_argument("--host", default="0.0.0.0")
+
+    # ── init ──
+    init_p = sub.add_parser("init", help="Initialize a new OpenClaw/Agno project")
+    init_p.add_argument("name", nargs="?", default="my-claw-app", help="Project directory name")
 
     args = parser.parse_args()
 
@@ -48,8 +57,25 @@ def main() -> None:
             _cmd_skills(args)
         case "serve":
             _cmd_serve(args)
+        case "dev":
+            _cmd_dev(args)
+        case "init":
+            _cmd_init(args)
         case _:
             parser.print_help()
+
+
+def _cmd_dev(args: argparse.Namespace) -> None:
+    from clawbridge.app import ClawApp
+    from rich.console import Console
+    console = Console()
+    
+    app = ClawApp()
+    console.print(f"🦞 Starting ClawBridge Dev Server on http://{args.host}:{args.port}")
+    try:
+        app.serve(host=args.host, port=args.port, reload=True)
+    except Exception as e:
+        console.print(f"[bold red]Failed to start server:[/bold red] {e}")
 
 
 def _cmd_run(args: argparse.Namespace) -> None:
@@ -124,6 +150,73 @@ def _cmd_serve(args: argparse.Namespace) -> None:
         f"({args.backend} backend)"
     )
     asyncio.run(bridge.serve(host=args.host, port=args.port))
+
+
+def _cmd_init(args: argparse.Namespace) -> None:
+    import os
+    from pathlib import Path
+    
+    project_dir = Path(args.name)
+    if project_dir.exists():
+        console.print(f"[bold red]Error:[/bold red] Directory '{args.name}' already exists.")
+        return
+
+    project_dir.mkdir(parents=True)
+    (project_dir / "agents").mkdir()
+    (project_dir / "skills").mkdir()
+    (project_dir / "knowledge").mkdir()
+    
+    # 1. Global config
+    config_yaml = """name: My ClawBridge App
+description: A multi-agent AI project.
+server:
+  host: 127.0.0.1
+  port: 8000
+"""
+    (project_dir / "claw.config.yaml").write_text(config_yaml)
+
+    # 2. Sample Agent
+    agent_yaml = """name: Assistant
+description: A personal OpenClaw agent powered by Agno.
+personality: I am a helpful, concise, and capable AI assistant.
+model:
+  provider: openai
+  model_id: gpt-4o
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+"""
+    (project_dir / "agents" / "assistant.yaml").write_text(agent_yaml)
+
+    # 3. Sample skill
+    skill_dir = project_dir / "skills" / "hello_world"
+    skill_dir.mkdir(parents=True)
+    
+    skill_md = """---
+name: hello-world
+description: A simple hello world skill
+version: 1.0.0
+tools:
+  - name: say_hello
+    description: Returns a greeting message.
+---
+# Skill: Hello World
+This skill provides a simple greeting capability.
+"""
+    (skill_dir / "SKILL.md").write_text(skill_md)
+    
+    tools_py = """def say_hello() -> str:
+    \"\"\"Returns a greeting message.\"\"\"
+    return "Hello from your new OpenClaw skill!"
+"""
+    (skill_dir / "tools.py").write_text(tools_py)
+    
+    # 4. Sample knowledge
+    (project_dir / "knowledge" / "readme.md").write_text("# Knowledge Base\nDrop documents here to be ingested by agents.\n")
+
+    console.print(f"🦞 [bold green]Successfully initialized '{args.name}'[/bold green]")
+    console.print(f"\nNext steps:\n  cd {args.name}\n  clawbridge dev\n")
 
 
 if __name__ == "__main__":

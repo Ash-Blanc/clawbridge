@@ -171,3 +171,40 @@ def create_agent(
     )
 
     return ClawBridge(agent, backend=backend)
+
+
+def compile_to_agno(agent_config: str | Path | ClawAgent) -> Any:
+    """
+    Directly compile a ClawAgent configuration (or YAML/JSON file) 
+    into a native Agno Agent, bypassing the ClawBridge runtime.
+    
+    This is the recommended DX for developers who want to use 
+    OpenClaw's definition patterns but execute natively in Agno.
+    """
+    from clawbridge.core.agent import ClawAgent
+    from clawbridge.backends.agno import AgnoBackend
+    from clawbridge.skills.loader import SkillLoader
+    from pathlib import Path
+
+    if isinstance(agent_config, (str, Path)):
+        path = Path(agent_config)
+        if path.suffix in (".yaml", ".yml"):
+            agent = ClawAgent.from_yaml(path)
+        elif path.suffix == ".json":
+            agent = ClawAgent.from_json(path)
+        else:
+            raise ValueError("Config file must be .yaml, .yml, or .json")
+            
+        # Automatically load skills from local 'skills' dir if they exist
+        skill_dir = path.parent / "skills"
+        if skill_dir.exists() and skill_dir.is_dir():
+            loader = SkillLoader([skill_dir])
+            agent.skills.extend(loader.load_all())
+            
+    elif isinstance(agent_config, ClawAgent):
+        agent = agent_config
+    else:
+        raise TypeError("agent_config must be a ClawAgent instance or a file path")
+
+    backend = AgnoBackend(agent)
+    return backend.compile()

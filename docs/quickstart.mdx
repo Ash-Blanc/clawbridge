@@ -1,0 +1,67 @@
+---
+title: Quickstart
+description: "Get your first clawbridge agent running in 60 seconds"
+---
+
+# Quickstart
+
+Start building powerful AI agents with `clawbridge` in just a few steps.
+
+## Installation
+
+Make sure you have Python 3.12+ installed, then install `clawbridge` using `uv` or `pip`:
+
+```bash
+uv pip install clawbridge[agno]
+```
+
+*Note: We include the `[agno]` extra to install the native Agno framework, FastAPI, and Uvicorn.*
+
+## Initialize a Project
+
+The easiest way to start is by using the CLI to scaffold a new project. 
+
+```bash
+clawbridge init my-ai-project
+cd my-ai-project
+```
+
+This command generates the following Next.js-style directory structure:
+
+```text
+my-ai-project/
+├── claw.config.yaml       # Global server configuration
+├── agents/
+│   └── assistant.yaml     # Your first agent definition
+├── skills/
+│   └── hello_world/       # A sample OpenClaw skill
+│       ├── SKILL.md
+│       └── tools.py
+└── knowledge/             # A folder for your RAG documents
+    └── readme.md
+```
+
+## Configure Your API Key
+
+Before running the agent, you need to provide an API key for the model you are using (OpenAI is the default).
+
+```bash
+export OPENAI_API_KEY="sk-your-key-here"
+```
+
+## Start the Development Server
+
+You don't need to write any Python code to start your agent. Just run the development server from the root of your project:
+
+```bash
+clawbridge dev
+```
+
+You should see output indicating that your `AgentOS` is running:
+
+```text
+🦞 Starting ClawBridge Dev Server on http://127.0.0.1:8000
+INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+```
+
+**Congratulations!** Your agent is now live and can be interacted with via the native Agno API endpoints.

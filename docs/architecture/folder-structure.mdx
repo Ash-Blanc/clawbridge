@@ -1,0 +1,42 @@
+---
+title: Folder Structure
+description: "Understanding the clawbridge meta-framework architecture"
+---
+
+# Folder Structure
+
+`clawbridge` adopts a Next.js/Nuxt.js style architecture. The file system dictates the capabilities and deployments of your agents.
+
+When you run `clawbridge init`, or structure your project manually, you should adhere to the following convention:
+
+```text
+my-ai-project/
+├── claw.config.yaml       # Global AgentOS config (ports, settings)
+├── agents/
+│   ├── support.yaml       # Deploys the "Support Agent"
+│   └── sales.yaml         # Deploys the "Sales Agent"
+├── skills/
+│   └── refund_processor/  # An OpenClaw skill package
+│       ├── SKILL.md       # The skill manifest and prompt
+│       └── tools.py       # Python logic for the tools
+└── knowledge/             # Auto-ingested RAG documents
+    ├── company_policy.pdf
+    └── faqs.txt
+```
+
+## `claw.config.yaml`
+This file sits at the root of your project and configures the global `AgentOS` instance. 
+- You can set the `host` and `port` for the server.
+- You can define global names and descriptions for your multi-agent OS.
+
+## The `agents/` Directory
+This is your **routing layer**. 
+Every `.yaml` or `.json` file placed in this directory represents a distinct, autonomous AI agent. When you run `clawbridge dev`, the framework scans this folder and deploys an API endpoint for every agent it finds.
+
+## The `skills/` Directory
+This acts as your **component library**.
+A skill is a folder containing a `SKILL.md` (the human and AI instructions) and a `tools.py` (the code). Agents in the `agents/` folder can automatically pull in these capabilities just by referencing them.
+
+## The `knowledge/` Directory
+This acts as your **static assets/database seed**.
+If your agents are configured to use a vector database (like LanceDB or PgVector), any files or links placed/configured here are automatically ingested and embedded so the agents can query them.

@@ -15,8 +15,11 @@ from clawbridge.core.memory import ClawMemory
 from clawbridge.core.skill import ClawSkill
 from clawbridge.core.types import (
     Backend,
+    ChannelConfig,
+    KnowledgeConfig,
     MemoryConfig,
     ModelConfig,
+    StorageConfig,
     ToolDefinition,
 )
 
@@ -46,6 +49,11 @@ class ClawAgent(BaseModel):
     # ── Memory ──
     memory_config: MemoryConfig = Field(default_factory=MemoryConfig)
 
+    # ── Native Backend Configurations ──
+    storage: StorageConfig = Field(default_factory=StorageConfig)
+    knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
+    channels: list[ChannelConfig] = Field(default_factory=list)
+
     # ── System Prompt ──
     system_prompt: str = ""
     # Additional instructions appended after skills
@@ -62,6 +70,32 @@ class ClawAgent(BaseModel):
     metadata: dict[str, Any] = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}
+
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> ClawAgent:
+        """Load a ClawAgent configuration from a YAML file."""
+        import yaml
+        from pathlib import Path
+
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(f"YAML config not found: {p}")
+
+        data = yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+        return cls(**data)
+
+    @classmethod
+    def from_json(cls, path: str | Path) -> ClawAgent:
+        """Load a ClawAgent configuration from a JSON file."""
+        import json
+        from pathlib import Path
+
+        p = Path(path)
+        if not p.exists():
+            raise FileNotFoundError(f"JSON config not found: {p}")
+
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return cls(**data)
 
     def build_system_prompt(self, memory: ClawMemory | None = None) -> str:
         """
@@ -109,8 +143,13 @@ class ClawAgent(BaseModel):
         return "\n\n".join(parts)
 
     def get_all_tools(self) -> list[ToolDefinition]:
-        """Collect tools from both direct definitions and skills."""
-        all_tools = list(self.tools)
+        """Collect tools from both direct definitions and skills, deduplicating by name."""
+        tools_by_name: dict[str, ToolDefinition] = {t.name: t for t in self.tools}
         for skill in self.skills:
-            all_tools.extend(skill.tools)
-        return all_tools
+            for skill_tool in skill.tools:
+                if skill_tool.name not in tools_by_name:
+                    tools_by_name[skill_tool.name] = skill_tool
+                elif tools_by_name[skill_tool.name].callable is None and skill_tool.callable is not None:
+                    # Prioritize the definition that has a callable
+                    tools_by_name[skill_tool.name] = skill_tool
+        return list(tools_by_name.values())

@@ -1,0 +1,38 @@
+---
+title: Introduction
+description: "Welcome to clawbridge — The Meta-Framework for AI Agents"
+---
+
+# 🦞 clawbridge
+
+**clawbridge** is a meta-framework that brings **Convention over Configuration** to AI agent development. 
+
+Inspired by how Next.js and Nuxt.js revolutionized frontend development, `clawbridge` allows you to build powerful, full-fledged AI agents using the [Agno](https://github.com/agno-agi/agno) runtime without writing any orchestration boilerplate.
+
+## The Problem
+
+Building a production-ready AI agent today requires wiring together multiple complex primitives: you need a `Db` for memory, a `Knowledge` base for RAG, `Tools` for actions, and an `AgentOS` or API to serve it all to Slack or WhatsApp.
+
+This results in hundreds of lines of Python code just to get an agent to say "Hello World" with memory on a messaging channel.
+
+## The clawbridge Solution
+
+`clawbridge` eliminates the abstraction tax entirely. It introduces file-system routing for agents. 
+
+You don't write server setup code. You simply create an `agents/support.yaml` file, define your agent's personality, point it to a `sqlite` database, and run:
+
+```bash
+clawbridge dev
+```
+
+`clawbridge` automatically discovers your YAML files, dynamically compiles them into native `agno.agent.Agent` objects, auto-wires your OpenClaw-style skills, ingests your knowledge documents, and spins up a native Agno `AgentOS` API.
+
+## Core Principles
+
+1. **Convention over Configuration:** If you put a `.yaml` file in the `agents/` directory, it becomes a deployed agent. If you put a folder in `skills/`, it becomes an available capability.
+2. **Native Execution:** We do not wrap Agno's execution at runtime. `clawbridge` acts purely as a build-time compiler, guaranteeing 100% compatibility with Agno's high-performance features.
+3. **OpenClaw Portability:** We embrace the OpenClaw `SKILL.md` standard, ensuring that your agent's capabilities are documented, human-readable, and highly portable.
+
+---
+
+*Define once. Deploy natively. Remember everything. 🦞*

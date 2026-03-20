@@ -1,0 +1,47 @@
+---
+title: Messaging Gateways
+description: "Deploy your agents to Slack or WhatsApp instantly"
+---
+
+# Messaging Gateways
+
+A core tenet of the OpenClaw philosophy is that agents should live where the users are. In `clawbridge`, you can expose your agents to Slack or WhatsApp simply by adding a `channels` block to your YAML definition.
+
+Behind the scenes, `clawbridge` compiles these into native Agno `AgentOS` interfaces (`agno.os.interfaces.slack.Slack`, etc.).
+
+## Configuring Channels
+
+In your `agents/my-agent.yaml`:
+
+```yaml
+name: Office Assistant
+channels:
+  - type: slack
+    token_env: SLACK_BOT_TOKEN
+```
+
+Notice that we do not hardcode the API token in the YAML. Instead, we specify `token_env`, which tells the framework which environment variable to read from at runtime.
+
+### Slack Configuration
+- `type`: `slack`
+- `token_env`: The environment variable containing your Slack Bot Token (e.g., `xoxb-...`).
+
+### WhatsApp Configuration
+- `type`: `whatsapp`
+- `token_env`: The environment variable containing your WhatsApp Access Token.
+- `verification_token_env`: (Optional) The environment variable containing your WhatsApp webhook verify token.
+- `bot_id_env`: (Optional) The environment variable containing your WhatsApp Phone Number ID.
+
+## Running with Channels
+
+1. Ensure your environment variables are set:
+```bash
+export SLACK_BOT_TOKEN="xoxb-your-token-here"
+```
+
+2. Run the development server:
+```bash
+clawbridge dev
+```
+
+Your agent is now live and listening to the configured channels via the AgentOS webhook endpoints.

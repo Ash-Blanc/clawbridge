@@ -1,0 +1,10 @@
+name: Assistant
+description: A personal OpenClaw agent powered by Agno.
+personality: I am a helpful, concise, and capable AI assistant.
+model:
+  provider: openai
+  model_id: gpt-4o
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
