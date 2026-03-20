@@ -13,35 +13,35 @@
   },
   "topbarCtaButton": {
     "name": "Get Started",
-    "url": "/quickstart"
+    "url": "/docs/quickstart"
   },
   "navigation": [
     {
       "group": "Get Started",
       "pages": [
-        "introduction",
-        "quickstart"
+        "docs/introduction",
+        "docs/quickstart"
       ]
     },
     {
       "group": "Architecture",
       "pages": [
-        "architecture/folder-structure",
-        "architecture/routing"
+        "docs/architecture/folder-structure",
+        "docs/architecture/routing"
       ]
     },
     {
       "group": "Guides",
       "pages": [
-        "guides/building-skills",
-        "guides/memory-storage",
-        "guides/gateways"
+        "docs/guides/building-skills",
+        "docs/guides/memory-storage",
+        "docs/guides/gateways"
       ]
     },
     {
       "group": "Examples",
       "pages": [
-        "examples/sales-agent"
+        "docs/examples/sales-agent"
       ]
     }
   ]

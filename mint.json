@@ -1,0 +1,48 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "clawbridge",
+  "logo": {
+    "dark": "/logo/dark.svg",
+    "light": "/logo/light.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#FF4500",
+    "light": "#FF7F50",
+    "dark": "#8B0000"
+  },
+  "topbarCtaButton": {
+    "name": "Get Started",
+    "url": "/docs/quickstart"
+  },
+  "navigation": [
+    {
+      "group": "Get Started",
+      "pages": [
+        "docs/introduction",
+        "docs/quickstart"
+      ]
+    },
+    {
+      "group": "Architecture",
+      "pages": [
+        "docs/architecture/folder-structure",
+        "docs/architecture/routing"
+      ]
+    },
+    {
+      "group": "Guides",
+      "pages": [
+        "docs/guides/building-skills",
+        "docs/guides/memory-storage",
+        "docs/guides/gateways"
+      ]
+    },
+    {
+      "group": "Examples",
+      "pages": [
+        "docs/examples/sales-agent"
+      ]
+    }
+  ]
+}
