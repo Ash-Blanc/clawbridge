@@ -16,34 +16,36 @@
     "name": "Get Started",
     "url": "/docs/quickstart"
   },
-  "navigation": [
-    {
-      "group": "Get Started",
-      "pages": [
-        "docs/introduction",
-        "docs/quickstart"
-      ]
-    },
-    {
-      "group": "Architecture",
-      "pages": [
-        "docs/architecture/folder-structure",
-        "docs/architecture/routing"
-      ]
-    },
-    {
-      "group": "Guides",
-      "pages": [
-        "docs/guides/building-skills",
-        "docs/guides/memory-storage",
-        "docs/guides/gateways"
-      ]
-    },
-    {
-      "group": "Examples",
-      "pages": [
-        "docs/examples/sales-agent"
-      ]
-    }
-  ]
+  "navigation": {
+    "groups": [
+      {
+        "group": "Get Started",
+        "pages": [
+          "docs/introduction",
+          "docs/quickstart"
+        ]
+      },
+      {
+        "group": "Architecture",
+        "pages": [
+          "docs/architecture/folder-structure",
+          "docs/architecture/routing"
+        ]
+      },
+      {
+        "group": "Guides",
+        "pages": [
+          "docs/guides/building-skills",
+          "docs/guides/memory-storage",
+          "docs/guides/gateways"
+        ]
+      },
+      {
+        "group": "Examples",
+        "pages": [
+          "docs/examples/sales-agent"
+        ]
+      }
+    ]
+  }
 }
