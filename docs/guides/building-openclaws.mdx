@@ -1,69 +1,12 @@
 ---
 title: Building OpenClaws
-description: "How clawbridge maps the OpenClaw philosophy to Agno primitives"
 ---
 
-# Building OpenClaws
+# Philosophy
 
-The OpenClaw ecosystem is built on a very specific set of design principles: an agent must have a distinct **personality**, highly portable **skills**, and the ability to **remember** its user across sessions. 
+OpenClaws are defined by their **Personality**, **Skills**, and **Memory**.
 
-Here is how `clawbridge` allows you to define an OpenClaw agent declaratively in YAML, and how it perfectly maps that "soul" down into a highly optimized, native Agno execution environment.
-
-## 1. The Declarative "Soul" (Agent YAML)
-
-In `clawbridge`, an agent is entirely defined by a configuration file placed in the `agents/` directory.
-
-```yaml agents/companion.yaml
-name: Personal Companion
-description: A helpful sidekick that remembers everything.
-personality: You are witty, concise, and incredibly supportive.
-model:
-  provider: openai
-  model_id: gpt-4o
-storage:
-  enabled: true
-  type: sqlite
-  db_url: companion_memory.db
-```
-
-When you run `clawbridge dev`, this YAML is read and directly compiled into an `agno.agent.Agent` class. 
-
-## 2. The 9-Layer System Prompt
-
-OpenClaw advocates for a structured system prompt that blends identity, user context, and skill instructions safely.
-
-When compiling to Agno, `clawbridge` automatically constructs this structured prompt and passes it to Agno's `instructions` parameter. It injects:
-1. The `personality` defined in the YAML.
-2. The dynamic memory context retrieved from the `storage` configuration.
-3. The specific Markdown bodies from any `SKILL.md` files the agent utilizes.
-
-## 3. Persistent Memory (Agentic Storage)
-
-A core tenet of OpenClaw is cross-session persistence. You shouldn't have to explain who you are every time you talk to your agent.
-
-By simply setting `storage: type: sqlite` in your YAML, `clawbridge` ensures your agent is born with native Agno `SqliteDb` memory.
-
-```python
-# What clawbridge compiles under the hood:
-from agno.agent import Agent
-from agno.db.sqlite import SqliteDb
-
-Agent(
-    # ...
-    db=SqliteDb(db_file="companion_memory.db"),
-    add_history_to_context=True,
-    read_chat_history=True,
-)
-```
-This guarantees your agent retains conversational state automatically without any manual string-manipulation or text-injection on your end.
-
-## 4. The `SKILL.md` Ecosystem
-
-OpenClaw relies on `SKILL.md`—a standard where a folder acts as an isolated capability containing both human-readable documentation and machine-readable execution schemas.
-
-In `clawbridge`, you drop a folder into the root `skills/` directory.
-- The `SKILL.md` YAML frontmatter is parsed into an Agno `Tool` schema.
-- The `tools.py` functions are dynamically imported and attached to the Agno execution loop.
-- The `SKILL.md` Markdown body is injected into the Agno Agent's instructions.
-
-This "Drag and Drop" capability means you can share skills with other OpenClaw developers and run them immediately on Agno, Agentica, or any other framework `clawbridge` supports, with zero code rewrites.
+1. **Soul:** Defined declaratively in YAML.
+2. **Prompt:** 9-layer system prompt assembled automatically.
+3. **Memory:** Native database persistence.
+4. **Capabilities:** Portable `SKILL.md` or `tools.py` packages.

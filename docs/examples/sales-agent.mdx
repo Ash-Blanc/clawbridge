@@ -1,104 +1,28 @@
 ---
-title: Example - Sales Agent
-description: "Building a fully-featured Sales Agent with memory, RAG, and Slack integration"
+title: Sales Agent
 ---
 
-# Complete Example: The Sales Agent
+# Sales Agent
 
-This example demonstrates how to build a production-ready OpenClaw agent using `clawbridge` and the Agno runtime. We will create a Sales Agent that remembers past interactions, searches the company product catalog, has access to a dynamic pricing skill, and lives on Slack.
+A production-ready agent with RAG and dynamic pricing.
 
-## 1. Global Setup
-
-Create your project structure and the global `claw.config.yaml` file:
-
-```yaml claw.config.yaml
-name: Acme Corp AI
-description: Internal AI agents for Acme Corp.
-server:
-  port: 8080
-```
-
-## 2. Define the Agent
-
-Create the agent definition at `agents/sales_agent.yaml`:
-
-```yaml agents/sales_agent.yaml
-name: Acme Sales Rep
-description: You are the lead sales representative for Acme Corp.
-personality: You are enthusiastic, helpful, and focused on closing deals while being transparent about pricing.
-model:
-  provider: openai
-  model_id: gpt-4o
+### Definition: `agents/sales.yaml`
+```yaml
+name: Acme Sales
+personality: Enthusiastic closer.
 storage:
-  enabled: true
   type: sqlite
-  db_url: sales_memory.db
 knowledge:
-  enabled: true
   type: lancedb
-  table_name: product_catalog
-  sources:
-    - "https://acmecorp.com/products"
+  sources: ["https://acmecorp.com/catalog"]
 channels:
   - type: slack
-    token_env: SLACK_BOT_TOKEN
+    token_env: SLACK_TOKEN
 ```
 
-## 3. Create the Pricing Skill
-
-We want the agent to be able to calculate bulk discounts dynamically. We'll create a `pricing` skill.
-
-**`skills/pricing/SKILL.md`**:
-```markdown
----
-name: pricing
-description: Tools for calculating product pricing and discounts.
-version: 1.0.0
-tools:
-  - name: calculate_bulk_discount
-    description: Returns the final price after applying a bulk discount.
-    parameters:
-      - name: base_price
-        type: float
-        required: true
-      - name: quantity
-        type: int
-        required: true
----
-# Skill: Pricing Engine
-Use this skill whenever a customer asks for a quote involving more than 10 items. Do not invent discounts; always use `calculate_bulk_discount`.
-```
-
-**`skills/pricing/tools.py`**:
+### Skill: `skills/pricing/tools.py`
 ```python
-def calculate_bulk_discount(base_price: float, quantity: int) -> str:
-    """Returns the final price after applying a bulk discount."""
-    if quantity < 10:
-        return f"No discount available. Total: ${base_price * quantity}"
-    
-    # 15% discount for 10 or more
-    discount = 0.15 
-    final_price = (base_price * quantity) * (1 - discount)
-    return f"A 15% discount was applied! Total: ${final_price:.2f}"
+def quote(price: float, qty: int) -> str:
+    """Calculates discounted price."""
+    return f"Total: ${price * qty * 0.9 if qty > 10 else price * qty}"
 ```
-
-## 4. Run the AgentOS
-
-Set your environment variables and start the server:
-
-```bash
-export OPENAI_API_KEY="sk-..."
-export SLACK_BOT_TOKEN="xoxb-..."
-
-clawbridge dev
-```
-
-### What happens next?
-
-1. `clawbridge` parses `sales_agent.yaml`.
-2. It discovers the `pricing` skill, maps `calculate_bulk_discount` to the Agno tool specification, and injects the `SKILL.md` instructions into the system prompt.
-3. It sets up `SqliteDb(db_file='sales_memory.db')` so the agent remembers customers across sessions.
-4. It initializes LanceDB, uses OpenAI to embed the Acme Corp product catalog URL, and attaches it as an Agno `Knowledge` base.
-5. It spins up an Agno `AgentOS` with the Slack interface active on port 8080.
-
-You now have a production-grade, stateful, RAG-enabled agent running on Slack with zero Python orchestration code!

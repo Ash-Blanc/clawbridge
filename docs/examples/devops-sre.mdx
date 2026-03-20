@@ -1,0 +1,25 @@
+---
+title: DevOps Agent
+---
+
+# DevOps Agent
+
+Automated SRE on Slack.
+
+### Definition: `agents/ops.yaml`
+```yaml
+name: OpsBot
+personality: Cautious engineer.
+storage:
+  type: postgres
+channels:
+  - type: slack
+    token_env: SLACK_TOKEN
+```
+
+### Skill: `skills/aws/tools.py`
+```python
+def reboot(instance_id: str) -> str:
+    """Reboots EC2 instance."""
+    return f"Rebooting {instance_id}..."
+```

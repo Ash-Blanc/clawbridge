@@ -1,0 +1,27 @@
+---
+title: Crypto Analyst
+---
+
+# Crypto Analyst
+
+Personal financial advisor on WhatsApp.
+
+### Definition: `agents/alpha.yaml`
+```yaml
+name: AlphaTracker
+model:
+  provider: anthropic
+  model_id: claude-3-5-sonnet
+knowledge:
+  type: lancedb
+channels:
+  - type: whatsapp
+    token_env: WHATSAPP_TOKEN
+```
+
+### Skill: `skills/portfolio/tools.py`
+```python
+def balance(wallet: str) -> dict:
+    """Fetches balances."""
+    return {"ETH": 1.5}
+```

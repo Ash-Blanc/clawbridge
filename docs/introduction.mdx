@@ -1,36 +1,15 @@
 ---
 title: Introduction
-description: "Welcome to clawbridge — The Meta-Framework for OpenClaw AI Agents"
+description: "Meta-Framework for OpenClaw AI Agents"
 ---
 
 # 🦞 clawbridge
 
-**clawbridge** is the universal meta-framework that empowers developers to build and deploy powerful personal AI agents by combining the intuitive design of the **OpenClaw ecosystem** with the raw power of the industry's best open-source agent runtimes.
+**clawbridge** is a meta-framework for AI agents. Inspired by Next.js, it uses **Convention over Configuration** to eliminate orchestration boilerplate.
 
-We believe that an AI agent's soul—its personality, skills, and memory—should never be trapped within the walls of a single framework. `clawbridge` provides a seamless, 1:1 integration with top-tier libraries like **Agno** and **Agentica**, allowing you to leverage their unique strengths natively without rewriting your agent's core identity.
+- **Define Once:** Declarative agent "souls" in YAML.
+- **Deploy Natively:** 1:1 Agno integration with zero abstraction tax.
+- **Portable Skills:** Python-first auto-mounted tools.
+- **Memory:** Native persistent storage (SQLite/Postgres).
 
-## The OpenClaw Philosophy
-
-In the OpenClaw paradigm, agents are more than just chatbots. They are built using a **9-layer system prompt architecture**, they possess persistent **cross-session memory**, and they are extended via portable, human-readable **SKILL.md** packages. 
-
-Before `clawbridge`, building a production-ready OpenClaw agent required hundreds of lines of complex Python orchestration code to wire up memory databases, RAG systems, and API gateways. 
-
-## The Meta-Framework Solution
-
-Taking inspiration from Next.js and Nuxt.js, `clawbridge` eliminates the abstraction tax through **Convention over Configuration**.
-
-You don't write server setup code. You simply create an `agents/my-agent.yaml` file, define your agent's personality, attach your skills, and run:
-
-```bash
-clawbridge dev
-```
-
-### Flawless 1:1 Framework Integration
-We do not reinvent the wheel. `clawbridge` automatically discovers your YAML files and dynamically compiles them into native `agno.agent.Agent` objects. It auto-wires your OpenClaw-style skills into native Agno `Tools`, ingests your knowledge documents into LanceDB/PgVector, and spins up a native Agno `AgentOS` API.
-
-### Frictionless Portability
-Lock-in is the enemy of innovation. By abstracting the agent definition from the runtime execution, we ensure that when you want to switch from Agno to Agentica (or a new framework entirely), your agent migrates instantly.
-
----
-
-*Define once. Deploy natively. Remember everything. 🦞*
+*Build once. Deploy natively. Remember everything.*

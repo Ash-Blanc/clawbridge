@@ -1,64 +1,21 @@
 ---
 title: Agent Routing
-description: "How clawbridge automatically turns YAML into deployed Agents"
 ---
 
-# Agent Routing
+# Routing
 
-In `clawbridge`, **there is no Python boilerplate required to declare an agent.**
+Any `.yaml` in `agents/` becomes a deployed native Agno `Agent`.
 
-Similar to how file-based routing works in modern frontend frameworks, any valid `.yaml` or `.json` file placed in the `agents/` directory is automatically discovered, compiled into a native `agno.agent.Agent`, and attached to your global `AgentOS` instance when you start the server.
-
-## Defining an Agent
-
-Create a file at `agents/customer_service.yaml`:
-
+### Example: `agents/bot.yaml`
 ```yaml
-name: Customer Service Bot
-description: Resolves customer inquiries.
-personality: You are polite, patient, and use emojis. 
+name: Bot
+personality: You are witty.
 model:
   provider: openai
   model_id: gpt-4o
 storage:
   enabled: true
   type: sqlite
-  db_url: agents.db
 ```
 
-When you run `clawbridge dev`, the framework detects this file and executes the equivalent of:
-
-```python
-from agno.agent import Agent
-from agno.models.openai import OpenAIChat
-from agno.db.sqlite import SqliteDb
-
-customer_service_agent = Agent(
-    name="Customer Service Bot",
-    description="Resolves customer inquiries.",
-    instructions=["# Personality\nYou are polite, patient, and use emojis."],
-    model=OpenAIChat(id="gpt-4o"),
-    db=SqliteDb(db_file="agents.db"),
-    add_history_to_context=True,
-    read_chat_history=True,
-)
-```
-
-## Bypassing the CLI (Programmatic Usage)
-
-If you are integrating `clawbridge` into an existing Python/Agno codebase and prefer not to use the `clawbridge dev` CLI, you can directly compile the YAML file using the `compile_to_agno` helper:
-
-```python
-from clawbridge import compile_to_agno
-from agno.os import AgentOS
-
-# Compile the YAML definition directly into a native Agno agent
-my_agent = compile_to_agno("agents/customer_service.yaml")
-
-# You can use the agent directly...
-my_agent.print_response("Hello! I need a refund.")
-
-# ...or serve it manually
-agent_os = AgentOS(agents=[my_agent])
-agent_os.serve()
-```
+Run `clawbridge dev` to deploy.

@@ -1,0 +1,23 @@
+---
+title: Personal Researcher
+---
+
+# Researcher
+
+Academic assistant using RAG.
+
+### Definition: `agents/scholar.yaml`
+```yaml
+name: Scholar
+knowledge:
+  enabled: true
+  type: pgvector
+  db_url: postgresql://localhost/vector
+```
+
+### Skill: `skills/notion/tools.py`
+```python
+def save_note(title: str, text: str) -> str:
+    """Saves to Notion."""
+    return f"Saved '{title}'."
+```

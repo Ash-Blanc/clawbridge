@@ -1,66 +1,29 @@
 ---
 title: Quickstart
-description: "Build and deploy your first OpenClaw agent in 60 seconds"
+description: "Deploy an OpenClaw agent in 60 seconds"
 ---
 
 # Quickstart
 
-Get your first OpenClaw-style agent running natively on Agno using `clawbridge`.
-
-## Installation
-
-Make sure you have Python 3.12+ installed. Install `clawbridge` with the `agno` extra, which pulls in the native Agno runtime, FastAPI, and Uvicorn.
-
+### 1. Install
 ```bash
 uv pip install clawbridge[agno]
-# or
-pip install clawbridge[agno]
 ```
 
-## Initialize Your Project
-
-The easiest way to start is by using the CLI to scaffold a new project. 
-
+### 2. Initialize
 ```bash
-clawbridge init my-openclaw
-cd my-openclaw
+clawbridge init my-agent
+cd my-agent
 ```
 
-This command generates a Next.js-style directory structure based on OpenClaw conventions:
-
-```text
-my-openclaw/
-├── claw.config.yaml       # Global AgentOS server configuration
-├── agents/
-│   └── assistant.yaml     # The declarative definition of your agent's soul
-├── skills/
-│   └── hello_world/       # An auto-discovered OpenClaw skill package
-│       ├── SKILL.md       # The skill's instructions and tool schema
-│       └── tools.py       # The native Python execution logic
-└── knowledge/             # Drop your Markdown/PDF files here for auto-ingestion
-    └── readme.md
-```
-
-## Configure Your Environment
-
-Before starting the agent, provide an API key for your chosen LLM provider (OpenAI is used in the default scaffold).
-
+### 3. Set API Key
 ```bash
-export OPENAI_API_KEY="sk-your-key-here"
+export OPENAI_API_KEY="sk-..."
 ```
 
-## Start the Development Server
-
-You don't need to write any Python orchestration code. Simply run the development server from the root of your project:
-
+### 4. Start Dev Server
 ```bash
 clawbridge dev
 ```
 
-### What happens under the hood?
-1. `clawbridge` parses your `agents/assistant.yaml` file.
-2. It discovers the `hello_world` skill, reads the `SKILL.md`, and dynamically mounts the Python callables in `tools.py`.
-3. It natively compiles this into an `agno.agent.Agent` and attaches an `agno.db.sqlite.SqliteDb` for persistent memory.
-4. It launches a native Agno `AgentOS` FastAPI server on `http://127.0.0.1:8000`.
-
-**Congratulations!** Your OpenClaw agent is now alive, possesses persistent memory, and can be interacted with via the Agno API endpoints or directly deployed to Slack/WhatsApp.
+Your AgentOS API is live at `http://127.0.0.1:8000`.

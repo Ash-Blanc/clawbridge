@@ -1,69 +1,19 @@
 ---
 title: Building Skills
-description: "How to create Code-First OpenClaw skills instantly"
 ---
 
-# Building Skills
+# Skills
 
-In OpenClaw and `clawbridge`, a "skill" is a portable package that grants an AI agent new capabilities. 
+Skills are auto-mounted from the `skills/` directory.
 
-To improve the Developer Experience (DX), `clawbridge` supports a **Code-First (Zero Config)** approach. You do not need to write complex YAML or Markdown to define a skill. You simply write Python.
+### 1. Code-First (Recommended)
+Just create `skills/my_skill/tools.py`. No config needed.
 
-## 1. Code-First Skills (Recommended)
-
-To create a new skill, just create a folder inside the `skills/` directory and add a `tools.py` file.
-
-```text
-skills/
-└── calculator/
-    └── tools.py
+```python
+def add(a: int, b: int) -> int:
+    """Adds two numbers."""
+    return a + b
 ```
 
-### The `tools.py` File
-
-Simply write standard Python functions, ensuring you include **type hints** and a **docstring**.
-
-```python skills/calculator/tools.py
-def add_numbers(a: float, b: float) -> str:
-    """
-    Adds two numbers together.
-    Use this skill whenever a customer asks for a math calculation.
-    """
-    result = a + b
-    return f"The sum of {a} and {b} is {result}."
-```
-
-### How it works natively:
-When you run `clawbridge dev`, the framework inspects your `tools.py` file. It automatically extracts the function signature, parses the type hints into a JSON schema, reads the docstring for the description, and dynamically mounts it as a native Agno `Tool` attached to your Agent.
-
-Zero boilerplate. Pure Python.
-
-## 2. The `SKILL.md` Standard (Legacy/Portable)
-
-If you are importing skills from the broader OpenClaw community, they often come with a `SKILL.md` file. `clawbridge` natively supports this format as well.
-
-```text
-skills/
-└── calculator/
-    ├── SKILL.md
-    └── tools.py
-```
-
-**`SKILL.md`**:
-```markdown
----
-name: add_numbers
-description: Adds two numbers together.
-parameters:
-  - name: a
-    type: float
-    required: true
-  - name: b
-    type: float
-    required: true
----
-# Skill: Calculator
-You have access to a highly accurate calculator. Always use this skill when asked to perform arithmetic instead of guessing the answer.
-```
-
-If `clawbridge` detects a `SKILL.md` file, it will use the YAML frontmatter as the source of truth for the tool schema, and it will inject the Markdown body directly into the agent's system prompt. It will still automatically mount the matching Python function from `tools.py`.
+### 2. OpenClaw Standard
+Add `SKILL.md` for human-readable instructions and explicit YAML schemas.

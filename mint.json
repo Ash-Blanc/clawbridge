@@ -44,8 +44,10 @@
       {
         "group": "Examples",
         "pages": [
-          "docs/examples/real-world-usecases",
-          "docs/examples/sales-agent"
+          "docs/examples/sales-agent",
+          "docs/examples/devops-sre",
+          "docs/examples/crypto-analyst",
+          "docs/examples/researcher"
         ]
       }
     ]
