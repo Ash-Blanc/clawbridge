@@ -1,37 +1,35 @@
 ---
 title: Introduction
-description: "Welcome to clawbridge — The Meta-Framework for AI Agents"
+description: "Welcome to clawbridge — The Meta-Framework for OpenClaw AI Agents"
 ---
 
 # 🦞 clawbridge
 
-**clawbridge** is a meta-framework that brings **Convention over Configuration** to AI agent development. 
+**clawbridge** is the universal meta-framework that empowers developers to build and deploy powerful personal AI agents by combining the intuitive design of the **OpenClaw ecosystem** with the raw power of the industry's best open-source agent runtimes.
 
-Inspired by how Next.js and Nuxt.js revolutionized frontend development, `clawbridge` allows you to build powerful, full-fledged AI agents using the [Agno](https://github.com/agno-agi/agno) runtime without writing any orchestration boilerplate.
+We believe that an AI agent's soul—its personality, skills, and memory—should never be trapped within the walls of a single framework. `clawbridge` provides a seamless, 1:1 integration with top-tier libraries like **Agno** and **Agentica**, allowing you to leverage their unique strengths natively without rewriting your agent's core identity.
 
-## The Problem
+## The OpenClaw Philosophy
 
-Building a production-ready AI agent today requires wiring together multiple complex primitives: you need a `Db` for memory, a `Knowledge` base for RAG, `Tools` for actions, and an `AgentOS` or API to serve it all to Slack or WhatsApp.
+In the OpenClaw paradigm, agents are more than just chatbots. They are built using a **9-layer system prompt architecture**, they possess persistent **cross-session memory**, and they are extended via portable, human-readable **SKILL.md** packages. 
 
-This results in hundreds of lines of Python code just to get an agent to say "Hello World" with memory on a messaging channel.
+Before `clawbridge`, building a production-ready OpenClaw agent required hundreds of lines of complex Python orchestration code to wire up memory databases, RAG systems, and API gateways. 
 
-## The clawbridge Solution
+## The Meta-Framework Solution
 
-`clawbridge` eliminates the abstraction tax entirely. It introduces file-system routing for agents. 
+Taking inspiration from Next.js and Nuxt.js, `clawbridge` eliminates the abstraction tax through **Convention over Configuration**.
 
-You don't write server setup code. You simply create an `agents/support.yaml` file, define your agent's personality, point it to a `sqlite` database, and run:
+You don't write server setup code. You simply create an `agents/my-agent.yaml` file, define your agent's personality, attach your skills, and run:
 
 ```bash
 clawbridge dev
 ```
 
-`clawbridge` automatically discovers your YAML files, dynamically compiles them into native `agno.agent.Agent` objects, auto-wires your OpenClaw-style skills, ingests your knowledge documents, and spins up a native Agno `AgentOS` API.
+### Flawless 1:1 Framework Integration
+We do not reinvent the wheel. `clawbridge` automatically discovers your YAML files and dynamically compiles them into native `agno.agent.Agent` objects. It auto-wires your OpenClaw-style skills into native Agno `Tools`, ingests your knowledge documents into LanceDB/PgVector, and spins up a native Agno `AgentOS` API.
 
-## Core Principles
-
-1. **Convention over Configuration:** If you put a `.yaml` file in the `agents/` directory, it becomes a deployed agent. If you put a folder in `skills/`, it becomes an available capability.
-2. **Native Execution:** We do not wrap Agno's execution at runtime. `clawbridge` acts purely as a build-time compiler, guaranteeing 100% compatibility with Agno's high-performance features.
-3. **OpenClaw Portability:** We embrace the OpenClaw `SKILL.md` standard, ensuring that your agent's capabilities are documented, human-readable, and highly portable.
+### Frictionless Portability
+Lock-in is the enemy of innovation. By abstracting the agent definition from the runtime execution, we ensure that when you want to switch from Agno to Agentica (or a new framework entirely), your agent migrates instantly.
 
 ---
 

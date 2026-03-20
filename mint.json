@@ -35,6 +35,7 @@
       {
         "group": "Guides",
         "pages": [
+          "docs/guides/building-openclaws",
           "docs/guides/building-skills",
           "docs/guides/memory-storage",
           "docs/guides/gateways"
