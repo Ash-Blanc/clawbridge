@@ -14,7 +14,6 @@ from pydantic import BaseModel, Field
 from clawbridge.core.memory import ClawMemory
 from clawbridge.core.skill import ClawSkill
 from clawbridge.core.types import (
-    Backend,
     ChannelConfig,
     KnowledgeConfig,
     MemoryConfig,

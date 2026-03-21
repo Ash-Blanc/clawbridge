@@ -4,7 +4,9 @@ title: Messaging Gateways
 
 # Channels
 
-Deploy to Slack or WhatsApp via YAML.
+Channels are currently an Agno-oriented extension, not a portable guarantee across all backends.
+
+Configure them in the agent definition:
 
 ```yaml
 channels:
@@ -15,3 +17,5 @@ channels:
 ```
 
 Tokens are read from environment variables.
+
+Today, treat this as partial backend-specific functionality.

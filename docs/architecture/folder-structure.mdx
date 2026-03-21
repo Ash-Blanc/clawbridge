@@ -2,13 +2,16 @@
 title: Folder Structure
 ---
 
-# Structure
+# Folder Structure
 
-`clawbridge` uses file-system routing.
+This layout belongs to the optional **Agno app mode**.
 
 | Path | Purpose |
 | :--- | :--- |
-| `agents/*.yaml` | Auto-deployed agents. |
+| `agents/*.yaml` | Agent definitions compiled into Agno agents. |
 | `skills/*/tools.py` | Auto-mounted Python tools. |
-| `knowledge/` | Documents for RAG. |
-| `claw.config.yaml` | Global server config. |
+| `skills/*/SKILL.md` | OpenClaw-style skill metadata and instructions. |
+| `knowledge/` | Documents intended for Agno knowledge ingestion. |
+| `claw.config.yaml` | App-mode server configuration. |
+
+If you are using the portable core directly, you do not need this layout.

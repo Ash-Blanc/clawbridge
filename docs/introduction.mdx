@@ -1,15 +1,35 @@
 ---
 title: Introduction
-description: "Meta-Framework for OpenClaw AI Agents"
+description: "Portable agent definitions with backend-specific runtimes"
 ---
 
-# 🦞 clawbridge
+# clawbridge
 
-**clawbridge** is a meta-framework for AI agents. Inspired by Next.js, it uses **Convention over Configuration** to eliminate orchestration boilerplate.
+`clawbridge` is a Python meta-framework for **portable agent definitions**.
 
-- **Define Once:** Declarative agent "souls" in YAML.
-- **Deploy Natively:** 1:1 Agno integration with zero abstraction tax.
-- **Portable Skills:** Python-first auto-mounted tools.
-- **Memory:** Native persistent storage (SQLite/Postgres).
+The core idea is simple:
 
-*Build once. Deploy natively. Remember everything.*
+1. Define an agent once with `ClawAgent`
+2. Attach skills, tools, and memory
+3. Run it through `ClawBridge` on a supported backend
+
+The portable core is built from:
+
+- `ClawAgent`
+- `ClawBridge`
+- `ClawSkill`
+- `ClawMemory`
+- `ToolDefinition`
+
+## What clawbridge is not
+
+`clawbridge` is not only an Agno app shell, and it does not claim feature-perfect parity across runtimes.
+
+There are two layers in the project:
+
+- **Portable core**: agent definition, skills, prompt assembly, memory object, and runtime wrapper
+- **Backend-specific helpers**: direct compile helpers and optional app-mode DX
+
+## Current emphasis
+
+The primary workflow is the portable core. Agno app mode still exists, but it is a convenience layer for Agno deployments rather than the product's main identity.

@@ -1,0 +1,38 @@
+---
+title: App Mode
+description: "Optional filesystem-driven Agno workflow"
+---
+
+# App Mode
+
+App mode is the optional, Agno-oriented workflow built around `ClawApp`.
+
+It scans a project layout like this:
+
+```text
+agents/*.yaml
+skills/*/SKILL.md
+skills/*/tools.py
+knowledge/
+claw.config.yaml
+```
+
+## When to use it
+
+Use app mode when:
+
+- your deployment target is Agno
+- you want project scaffolding and filesystem discovery
+- you prefer convention over explicit Python wiring
+
+## When not to use it
+
+Do not treat app mode as the portable core API.
+
+If you care most about backend portability, start with:
+
+- `ClawAgent`
+- `ClawSkill`
+- `ClawBridge`
+
+Then add app mode only if an Agno filesystem workflow is useful for your project.

@@ -1,5 +1,5 @@
-import pytest
 from pathlib import Path
+
 from clawbridge.core.skill import ClawSkill
 
 def test_code_first_skill(tmp_path: Path):

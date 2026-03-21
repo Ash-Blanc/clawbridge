@@ -4,7 +4,12 @@ title: Memory & Storage
 
 # Memory
 
-Configured in the agent's YAML.
+There are two memory layers in `clawbridge`:
+
+1. `ClawMemory`, which is portable and shared by `ClawBridge`
+2. backend-native storage, which depends on the selected runtime
+
+Native storage is configured in the agent definition:
 
 ```yaml
 storage:
@@ -13,4 +18,4 @@ storage:
   db_url: memory.db
 ```
 
-Memory is natively handled by Agno `Db` providers.
+Agno currently maps this to native `Db` providers. Other backends may ignore or partially implement it.

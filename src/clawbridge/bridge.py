@@ -1,8 +1,8 @@
 """
-ClawBridge — the main orchestrator.
+ClawBridge — portable runtime for backend-neutral agent definitions.
 
-This is the primary API surface. Users define a ClawAgent and
-the bridge compiles + deploys it to any supported backend.
+Users define a ClawAgent once, then compile or run it on a supported backend.
+Backend-specific helpers exist, but ClawBridge is the primary runtime surface.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from typing import Any, Sequence
 from clawbridge.backends.base import ClawBackend
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.memory import ClawMemory
-from clawbridge.core.types import Backend, MemoryConfig, ModelConfig
+from clawbridge.core.types import Backend, ModelConfig
 from clawbridge.skills.loader import SkillLoader
 
 
@@ -51,22 +51,37 @@ class ClawBridge:
             self._load_skills_from_paths()
 
         # Initialize backend
-        self._backend_name = Backend(backend)
+        self._backend_name = self._normalize_backend_name(backend)
         self._backend = self._create_backend(self._backend_name)
 
     @classmethod
     def register_backend(cls, name: str, backend_cls: type[ClawBackend]) -> None:
-        """Register a custom backend (for extensibility)."""
+        """Register a custom backend by name."""
         cls._backend_registry[name] = backend_cls
 
-    def _create_backend(self, backend: Backend) -> ClawBackend:
+    @classmethod
+    def _normalize_backend_name(cls, backend: str | Backend) -> str:
+        """Resolve built-in and custom backend identifiers to a string name."""
+        if isinstance(backend, Backend):
+            return backend.value
+
+        try:
+            return Backend(backend).value
+        except ValueError:
+            if backend in cls._backend_registry:
+                return backend
+            valid = [member.value for member in Backend]
+            valid.extend(sorted(cls._backend_registry))
+            raise ValueError(f"Unknown backend: {backend}. Valid: {valid}")
+
+    def _create_backend(self, backend_name: str) -> ClawBackend:
         """Create the appropriate backend instance."""
         # Check custom registry first
-        if backend.value in self._backend_registry:
-            cls = self._backend_registry[backend.value]
+        if backend_name in self._backend_registry:
+            cls = self._backend_registry[backend_name]
             return cls(self.agent, self._memory)
 
-        match backend:
+        match Backend(backend_name):
             case Backend.AGNO:
                 from clawbridge.backends.agno import AgnoBackend
                 return AgnoBackend(self.agent, self._memory)
@@ -74,7 +89,7 @@ class ClawBridge:
                 from clawbridge.backends.agentica import AgenticaBackend
                 return AgenticaBackend(self.agent, self._memory)
             case _:
-                raise ValueError(f"Unknown backend: {backend}")
+                raise ValueError(f"Unknown backend: {backend_name}")
 
     def _load_skills_from_paths(self) -> None:
         """Load skills from the agent's configured skill paths."""
@@ -94,7 +109,7 @@ class ClawBridge:
 
     def switch_backend(self, backend: str | Backend) -> None:
         """Hot-swap the backend framework (preserving memory)."""
-        self._backend_name = Backend(backend)
+        self._backend_name = self._normalize_backend_name(backend)
         self._backend = self._create_backend(self._backend_name)
 
     async def serve(self, host: str = "0.0.0.0", port: int = 8000) -> None:
@@ -175,11 +190,10 @@ def create_agent(
 
 def compile_to_agno(agent_config: str | Path | ClawAgent) -> Any:
     """
-    Directly compile a ClawAgent configuration (or YAML/JSON file) 
-    into a native Agno Agent, bypassing the ClawBridge runtime.
-    
-    This is the recommended DX for developers who want to use 
-    OpenClaw's definition patterns but execute natively in Agno.
+    Compile a portable agent definition directly to a native Agno agent.
+
+    This is an Agno-specific helper for users who want native Agno objects
+    without keeping ClawBridge in the runtime path.
     """
     from clawbridge.core.agent import ClawAgent
     from clawbridge.backends.agno import AgnoBackend

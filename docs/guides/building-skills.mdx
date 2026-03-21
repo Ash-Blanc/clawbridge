@@ -4,10 +4,10 @@ title: Building Skills
 
 # Skills
 
-Skills are auto-mounted from the `skills/` directory.
+Skills are portable packages. In app mode they can be auto-discovered from `skills/`, but the portable core does not require that directory layout.
 
 ### 1. Code-First (Recommended)
-Just create `skills/my_skill/tools.py`. No config needed.
+Create a directory with `tools.py`. No extra config is required.
 
 ```python
 def add(a: int, b: int) -> int:
@@ -17,3 +17,5 @@ def add(a: int, b: int) -> int:
 
 ### 2. OpenClaw Standard
 Add `SKILL.md` for human-readable instructions and explicit YAML schemas.
+
+If a skill defines only metadata, provide the implementation separately through `ClawAgent.tools`.

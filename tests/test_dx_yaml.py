@@ -1,13 +1,13 @@
-import pytest
-import os
+from importlib.util import find_spec
 from pathlib import Path
+
+import pytest
+
 from clawbridge.bridge import compile_to_agno
-from clawbridge.core.agent import ClawAgent
+
 
 def test_compile_to_agno_from_yaml(tmp_path: Path):
-    try:
-        import agno
-    except ImportError:
+    if find_spec("agno") is None:
         pytest.skip("agno not installed")
 
     yaml_content = """

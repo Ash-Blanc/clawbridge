@@ -1,29 +1,57 @@
 ---
 title: Quickstart
-description: "Deploy an OpenClaw agent in 60 seconds"
+description: "Start with the portable core, then choose a backend"
 ---
 
 # Quickstart
 
 ### 1. Install
+
 ```bash
-uv pip install clawbridge[agno]
+uv sync --extra all
 ```
 
-### 2. Initialize
+### 2. Define a portable agent
+
+```python
+from clawbridge import ClawAgent, ClawBridge, ModelConfig
+
+agent = ClawAgent(
+    name="Molty",
+    description="Portable personal assistant",
+    personality="Helpful and concise.",
+    model=ModelConfig(
+        provider="anthropic",
+        model_id="claude-sonnet-4-20250514",
+        api_key_env="ANTHROPIC_API_KEY",
+    ),
+)
+
+bridge = ClawBridge(agent, backend="agno")
+print(bridge.chat("What can you do?"))
+```
+
+### 3. Add memory or skills as needed
+
+```python
+bridge.memory.remember("user_name", "Alice", category="preference")
+```
+
+### 4. Switch runtime when needed
+
+```python
+bridge.switch_backend("agentica")
+print(bridge.memory.recall("user_name"))
+```
+
+## Optional: Agno app mode
+
+If you want the filesystem-driven Agno workflow, scaffold it separately:
+
 ```bash
 clawbridge init my-agent
 cd my-agent
-```
-
-### 3. Set API Key
-```bash
-export OPENAI_API_KEY="sk-..."
-```
-
-### 4. Start Dev Server
-```bash
 clawbridge dev
 ```
 
-Your AgentOS API is live at `http://127.0.0.1:8000`.
+That mode is Agno-only and exists on top of the portable core.

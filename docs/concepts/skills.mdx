@@ -1,0 +1,32 @@
+---
+title: Skills
+description: "Portable skills from SKILL.md or code-first directories"
+---
+
+# Skills
+
+`clawbridge` supports two skill styles:
+
+## `SKILL.md` packages
+
+OpenClaw-style skills use:
+
+- YAML frontmatter for metadata and tool schema
+- Markdown body for agent instructions
+
+`ClawSkill.from_skill_md()` parses both and converts them into a portable `ClawSkill`.
+
+## Code-first skill directories
+
+If a directory contains `tools.py` or `main.py` but no `SKILL.md`, `clawbridge` will auto-generate a skill from discovered callables.
+
+This is useful for fast local iteration, but it carries less human-readable structure than a full `SKILL.md`.
+
+## Wiring rule
+
+Tool metadata can come from a skill, but actual implementations still matter:
+
+- if a callable exists in the skill directory, it is loaded automatically
+- if the skill only defines metadata, you should provide the implementation via `ClawAgent.tools`
+
+`ClawAgent.get_all_tools()` merges direct tools and skill tools by name, preferring the version that has a callable.

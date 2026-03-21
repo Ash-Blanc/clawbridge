@@ -1,0 +1,44 @@
+---
+title: Agent Definition
+description: "The portable source of truth in clawbridge"
+---
+
+# Agent Definition
+
+`ClawAgent` is the portable source of truth in `clawbridge`.
+
+It groups three kinds of configuration:
+
+## Portable core
+
+These fields are the main cross-backend contract:
+
+- identity: `name`, `description`, `personality`, `role`
+- model config: `provider`, `model_id`, API key indirection
+- tools and skills: direct `ToolDefinition` values plus `ClawSkill`
+- prompt composition: `system_prompt`, `additional_instructions`
+- bridge-level memory: `memory_config`
+
+## Backend extensions
+
+These fields are meaningful, but their behavior depends on the backend:
+
+- `storage`
+- `knowledge`
+- `channels`
+- `serve()`
+
+Use them when you need native backend capabilities, but do not assume identical semantics across runtimes.
+
+## Prompt assembly
+
+`ClawAgent.build_system_prompt()` assembles instructions in this order:
+
+1. identity or description
+2. role
+3. custom system prompt
+4. memory context
+5. skill instructions
+6. additional instructions
+
+That ordering is part of the portable core and should remain stable.

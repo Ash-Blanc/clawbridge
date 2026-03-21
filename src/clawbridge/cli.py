@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 from rich.console import Console
@@ -34,7 +33,7 @@ def main() -> None:
     skills_p.add_argument("--dir", type=Path, default=Path("./skills"))
 
     # ── dev ──
-    dev_p = sub.add_parser("dev", help="Start the local development server (Next.js style)")
+    dev_p = sub.add_parser("dev", help="Start the optional Agno app-mode development server")
     dev_p.add_argument("--host", default="127.0.0.1")
     dev_p.add_argument("--port", type=int, default=8000)
 
@@ -45,7 +44,7 @@ def main() -> None:
     serve_p.add_argument("--host", default="0.0.0.0")
 
     # ── init ──
-    init_p = sub.add_parser("init", help="Initialize a new OpenClaw/Agno project")
+    init_p = sub.add_parser("init", help="Initialize a new Agno app-mode project")
     init_p.add_argument("name", nargs="?", default="my-claw-app", help="Project directory name")
 
     args = parser.parse_args()
@@ -153,7 +152,6 @@ def _cmd_serve(args: argparse.Namespace) -> None:
 
 
 def _cmd_init(args: argparse.Namespace) -> None:
-    import os
     from pathlib import Path
     
     project_dir = Path(args.name)

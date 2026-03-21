@@ -1,10 +1,10 @@
 """
-clawbridge — Deploy OpenClaw-like agents to any framework. 🦞
+clawbridge — define portable agents, then run them on supported backends. 🦞
 
 Usage:
     from clawbridge import ClawAgent, ClawBridge, ClawSkill, create_agent
 
-    # Quick start
+    # Portable quick start
     agent = create_agent(name="Molty", backend="agno")
     print(agent.chat("Hello!"))
 

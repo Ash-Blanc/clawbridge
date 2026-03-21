@@ -26,6 +26,21 @@
         ]
       },
       {
+        "group": "Concepts",
+        "pages": [
+          "docs/concepts/agent-definition",
+          "docs/concepts/skills",
+          "docs/concepts/memory"
+        ]
+      },
+      {
+        "group": "Backends",
+        "pages": [
+          "docs/backends/agno",
+          "docs/backends/agentica"
+        ]
+      },
+      {
         "group": "Architecture",
         "pages": [
           "docs/architecture/folder-structure",
@@ -38,7 +53,8 @@
           "docs/guides/building-openclaws",
           "docs/guides/building-skills",
           "docs/guides/memory-storage",
-          "docs/guides/gateways"
+          "docs/guides/gateways",
+          "docs/guides/app-mode"
         ]
       },
       {

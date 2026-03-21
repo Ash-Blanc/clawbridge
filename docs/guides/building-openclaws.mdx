@@ -2,11 +2,14 @@
 title: Building OpenClaws
 ---
 
-# Philosophy
+# Building Portable Agents
 
-OpenClaws are defined by their **Personality**, **Skills**, and **Memory**.
+OpenClaw-inspired agents in `clawbridge` are defined by:
 
-1. **Soul:** Defined declaratively in YAML.
-2. **Prompt:** 9-layer system prompt assembled automatically.
-3. **Memory:** Native database persistence.
-4. **Capabilities:** Portable `SKILL.md` or `tools.py` packages.
+1. **Identity** via `ClawAgent`
+2. **Prompt assembly** via `build_system_prompt()`
+3. **Capabilities** via `ClawSkill` and `ToolDefinition`
+4. **Memory** via `ClawMemory`
+5. **Runtime choice** via `ClawBridge`
+
+Start with the portable core first. Add backend-specific features only when you need them.

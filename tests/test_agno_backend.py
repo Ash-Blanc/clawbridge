@@ -1,13 +1,14 @@
+from importlib.util import find_spec
+
 import pytest
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.types import ModelConfig, LLMProvider
 from clawbridge.backends.agno import AgnoBackend
 
+
 def test_agno_backend_compile():
     # Only run if agno is installed
-    try:
-        import agno
-    except ImportError:
+    if find_spec("agno") is None:
         pytest.skip("agno not installed")
 
     from clawbridge.core.types import ToolDefinition

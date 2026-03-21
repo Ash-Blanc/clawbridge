@@ -1,29 +1,25 @@
 """
-The clawbridge Application Compiler (Meta-Framework layer).
+Optional Agno app compiler for filesystem-driven projects.
 
-Provides a Next.js/Nuxt.js style Developer Experience by scanning the file system:
-  /agents/*.yaml    -> Compiles to Agno Agents
-  /skills/*         -> Auto-wired Skills & Tools
-  claw.config.yaml  -> AgentOS global configuration
+This layer is convenience DX for Agno deployments. The portable core of the
+project remains ClawAgent + ClawBridge; ClawApp is an Agno-oriented wrapper
+around that core.
 """
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Any
 
 import yaml
 
 from clawbridge.bridge import compile_to_agno
-from clawbridge.core.agent import ClawAgent
 from clawbridge.skills.loader import SkillLoader
 
 
 class ClawApp:
     """
-    A meta-framework application instance that discovers agents,
-    skills, and configuration from the filesystem to build an Agno AgentOS.
+    Discover agents, skills, and config from disk to build an Agno AgentOS.
     """
 
     def __init__(self, root_dir: str | Path = "."):
@@ -52,18 +48,10 @@ class ClawApp:
 
         for file_path in self.agents_dir.glob("*.yaml"):
             try:
-                agent_def = ClawAgent.from_yaml(file_path)
-                
                 # Auto-wire skills requested by the agent if they exist in the global skills/ dir
                 if skill_loader:
-                    # In a real scenario, we might only load skills listed in the YAML,
-                    # but for DX, if the YAML doesn't specify, we can auto-load all,
-                    # or filter based on agent definition.
-                    # Currently compile_to_agno handles this, but let's be explicit here:
-                    available_skills = skill_loader.load_all()
-                    
-                    # If the agent explicitly requested skills by name in YAML, wire them.
-                    # Alternatively, we just provide the skills_dir to the compiler.
+                    # Skill discovery is intentionally delegated to compile_to_agno
+                    # so app mode stays a thin wrapper around the portable core.
                     pass
 
                 # Compile to native Agno agent

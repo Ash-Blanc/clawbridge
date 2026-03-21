@@ -141,7 +141,7 @@ class AgenticaBackend(ClawBackend):
         self.memory.add_message(session_id, "user", message)
 
         try:
-            from agentica import agentic, spawn  # type: ignore[import-untyped]
+            from agentica import spawn  # type: ignore[import-untyped]
 
             # Spawn an agent with our scope
             agent = await spawn(

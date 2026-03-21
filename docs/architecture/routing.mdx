@@ -4,7 +4,7 @@ title: Agent Routing
 
 # Routing
 
-Any `.yaml` in `agents/` becomes a deployed native Agno `Agent`.
+Any `.yaml` in `agents/` becomes a deployed native Agno `Agent` in app mode.
 
 ### Example: `agents/bot.yaml`
 ```yaml
@@ -18,4 +18,6 @@ storage:
   type: sqlite
 ```
 
-Run `clawbridge dev` to deploy.
+Run `clawbridge dev` to deploy through Agno `AgentOS`.
+
+This routing model is not the main portable runtime API. It is the filesystem-driven Agno workflow.
