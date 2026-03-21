@@ -12,10 +12,13 @@ Once your first agent runs, the next useful step is memory.
 Store one fact or preference and read it back.
 
 ```python
-bridge.memory.remember("user_name", "Alice", category="preference")
-bridge.memory.remember("timezone", "UTC", category="preference")
+from clawbridge import ClawMemory
 
-print(bridge.memory.recall("user_name"))
+memory = ClawMemory()
+memory.remember("user_name", "Alice", category="preference")
+memory.remember("timezone", "UTC", category="preference")
+
+print(memory.recall("user_name"))
 ```
 
 Use memory for:

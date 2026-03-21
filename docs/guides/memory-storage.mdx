@@ -6,8 +6,8 @@ title: Memory & Storage
 
 There are two memory layers in `clawbridge`:
 
-1. `ClawMemory`, which is portable and shared by `ClawBridge`
-2. backend-native storage, which depends on the selected runtime
+1. `ClawMemory`, which is the lightweight helper used by `clawbridge`
+2. framework-native storage, which depends on the selected runtime
 
 Native storage is configured in the agent definition:
 
@@ -18,4 +18,4 @@ storage:
   db_url: memory.db
 ```
 
-Agno currently maps this to native `Db` providers. Other backends may ignore or partially implement it.
+Agno currently maps this to native `Db` providers. Agentica currently does not.

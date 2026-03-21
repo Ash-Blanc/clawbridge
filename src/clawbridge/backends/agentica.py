@@ -13,6 +13,7 @@ from typing import Any
 from clawbridge.backends.base import ClawBackend
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.memory import ClawMemory
+from clawbridge.core.session import OpenClawSessionContext
 from clawbridge.core.types import LLMProvider, ToolDefinition
 
 
@@ -108,7 +109,10 @@ class AgenticaBackend(ClawBackend):
         obj.__name__ = tool_def.name  # type: ignore[attr-defined]
         return obj
 
-    def compile(self) -> Any:
+    def _compile_for_session(
+        self,
+        session_context: OpenClawSessionContext | None = None,
+    ) -> Any:
         """
         Compile ClawAgent → Agentica agent config.
 
@@ -118,17 +122,23 @@ class AgenticaBackend(ClawBackend):
         Since Agentica agents are created asynchronously via spawn(),
         we return the config and lazily create on first run().
         """
-        self._ensure_imports()
-
-        system_prompt = self.agent.build_system_prompt(self.memory)
+        system_prompt = self.build_system_prompt(
+            self.memory,
+            session_context=session_context,
+        )
         scope = self._build_scope()
+        runtime = self.get_sandbox_runtime(session_context)
 
-        # Store the compilation result as a config dict
-        self._native_agent = _AgenticaAgentConfig(
+        return _AgenticaAgentConfig(
             system_prompt=system_prompt,
             scope=scope,
             model=self._resolve_model_string(),
+            runtime=runtime,
         )
+
+    def compile(self) -> Any:
+        """Compile the default main-session Agentica config."""
+        self._native_agent = self._compile_for_session()
         return self._native_agent
 
     async def run(self, message: str, session_id: str = "default") -> str:
@@ -137,7 +147,8 @@ class AgenticaBackend(ClawBackend):
 
         Agentica uses spawn() + agent interaction patterns.
         """
-        config = self.native
+        session_context = self.get_session_context(session_id)
+        config = self._compile_for_session(session_context)
         self.memory.add_message(session_id, "user", message)
 
         try:
@@ -194,11 +205,16 @@ class _AgenticaAgentConfig:
     """Internal config holder for lazy Agentica agent creation."""
 
     def __init__(
-        self, system_prompt: str, scope: dict[str, Any], model: str
+        self,
+        system_prompt: str,
+        scope: dict[str, Any],
+        model: str,
+        runtime: Any,
     ):
         self.system_prompt = system_prompt
         self.scope = scope
         self.model = model
+        self.runtime = runtime
 
 
 class _AgenticaMemoryBridge:

@@ -1,30 +1,29 @@
 ---
 title: Agno Backend
-description: "Portable core plus Agno-native helpers"
+description: "OpenClaw-style builders plus Agno-native helpers"
 ---
 
 # Agno Backend
 
-Agno is the most complete backend in the repository today.
+Agno is the most complete framework integration in the repository today.
 
 ## What works
 
-- `ClawBridge(..., backend="agno")`
-- `compile_to_agno()`
+- `build_agno_agent(...)`
 - direct callable tools
-- placeholder tools for schema-only skills
+- strict failure for schema-only skills without real callables
 - native storage mapping for `storage`
-- partial knowledge integration
-- partial channel integration
+- knowledge integration
+- channel policy and Agno interface wiring
 - serving through Agno `AgentOS`
 
-## What is backend-specific
+## What is Agno-specific
 
-These features should be treated as Agno extensions rather than portable guarantees:
+These features should be treated as Agno extensions rather than generic guarantees:
 
 - database providers from `storage`
 - vector knowledge ingestion from `knowledge`
 - Slack and WhatsApp interfaces from `channels`
-- filesystem app mode via `ClawApp`
+- optional filesystem deployment helper via `clawbridge.app.ClawApp`
 
-If you need native Agno objects, `compile_to_agno()` is the direct path.
+If you need native Agno objects, `build_agno_agent(...)` is the direct path.

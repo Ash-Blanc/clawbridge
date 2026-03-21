@@ -1,9 +1,9 @@
 """
-Optional Agno app compiler for filesystem-driven projects.
+Optional Agno deployment helper for filesystem-driven projects.
 
-This layer is convenience DX for Agno deployments. The portable core of the
-project remains ClawAgent + ClawBridge; ClawApp is an Agno-oriented wrapper
-around that core.
+This layer is secondary to the workspace-plus-builders path. `ClawApp`
+wraps a filesystem-driven Agno deployment flow and is not part of the
+main product surface.
 """
 
 from __future__ import annotations
@@ -13,13 +13,12 @@ from typing import Any
 
 import yaml
 
-from clawbridge.bridge import compile_to_agno
-from clawbridge.skills.loader import SkillLoader
+from clawbridge.builders import build_agno_agent
 
 
 class ClawApp:
     """
-    Discover agents, skills, and config from disk to build an Agno AgentOS.
+    Discover agents and config from disk to build an Agno AgentOS.
     """
 
     def __init__(self, root_dir: str | Path = "."):
@@ -42,20 +41,9 @@ class ClawApp:
         if not self.agents_dir.exists():
             return
 
-        skill_loader = None
-        if self.skills_dir.exists():
-            skill_loader = SkillLoader([self.skills_dir])
-
         for file_path in self.agents_dir.glob("*.yaml"):
             try:
-                # Auto-wire skills requested by the agent if they exist in the global skills/ dir
-                if skill_loader:
-                    # Skill discovery is intentionally delegated to compile_to_agno
-                    # so app mode stays a thin wrapper around the portable core.
-                    pass
-
-                # Compile to native Agno agent
-                native_agent = compile_to_agno(file_path)
+                native_agent = build_agno_agent(file_path)
                 self.agents.append(native_agent)
             except Exception as e:
                 print(f"Failed to load agent from {file_path.name}: {e}")

@@ -1,19 +1,19 @@
 ---
 title: Introduction
-description: "A beginner-friendly way to build AI agents in Python"
+description: "OpenClaw-style workspaces, skills, and builders for Agno and Agentica"
 ---
 
 # clawbridge
 
-`clawbridge` is a Python framework for building AI agents with a small, readable set of primitives.
+`clawbridge` helps you build OpenClaw-style agents inside frameworks you already want to use.
 
 If you are new to the project, think of it like this:
 
-1. Create an agent
-2. Run it
-3. Add skills
-4. Add memory
-5. Explore advanced features later
+1. Scaffold an OpenClaw workspace
+2. Define an agent in `agent.yaml` or `agents.yaml`
+3. Add skills and workspace files
+4. Build for Agno or Agentica
+5. Add framework-specific extras only when needed
 
 ## Start here
 
@@ -27,21 +27,22 @@ Follow this path in order:
 The main objects you will use first are:
 
 - `ClawAgent`
-- `ClawBridge`
 - `ClawSkill`
 - `ClawMemory`
+- `build_agno_agent()`
+- `build_agentica_agent()`
 
 ## Fastest path
 
 If you want the fastest path:
 
-- read the quickstart
-- build one small agent
+- scaffold one workspace
+- run one small agent
 - load one skill
-- store one memory
+- store one memory value
 
-Do not start with architecture or backend details unless you already need them.
+Do not start with architecture or framework-specific deployment details unless you already need them.
 
 ## What comes later
 
-There are more advanced parts of the project, including backend-specific helpers and filesystem-driven app mode, but they are intentionally not the starting point of the docs.
+There are more advanced parts of the project, including optional Agno deployment helpers, but they are intentionally not the starting point of the docs.

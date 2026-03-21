@@ -4,7 +4,7 @@ title: Messaging Gateways
 
 # Channels
 
-Channels are currently an Agno-oriented extension, not a portable guarantee across all backends.
+Channels are currently an Agno-oriented extension with a shared policy layer for DM, group, mention, and heartbeat behavior.
 
 Configure them in the agent definition:
 
@@ -18,4 +18,4 @@ channels:
 
 Tokens are read from environment variables.
 
-Today, treat this as partial backend-specific functionality.
+Today, treat transport execution as partial Agno-specific functionality.

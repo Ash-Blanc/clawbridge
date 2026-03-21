@@ -3,10 +3,10 @@ from pathlib import Path
 
 import pytest
 
-from clawbridge.bridge import compile_to_agno
+from clawbridge.builders import build_agno_agent
 
 
-def test_compile_to_agno_from_yaml(tmp_path: Path):
+def test_build_agno_agent_from_yaml(tmp_path: Path):
     if find_spec("agno") is None:
         pytest.skip("agno not installed")
 
@@ -24,8 +24,7 @@ storage:
     yaml_file = tmp_path / "agent.yaml"
     yaml_file.write_text(yaml_content)
 
-    # Compile directly to an agno agent
-    native_agent = compile_to_agno(yaml_file)
+    native_agent = build_agno_agent(yaml_file)
 
     assert native_agent is not None
     assert native_agent.name == "YamlAgent"

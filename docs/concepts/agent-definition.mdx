@@ -1,44 +1,36 @@
 ---
 title: Agent Definition
-description: "The portable source of truth in clawbridge"
+description: "The OpenClaw-style agent spec in clawbridge"
 ---
 
 # Agent Definition
 
-`ClawAgent` is the portable source of truth in `clawbridge`.
+`ClawAgent` is the main OpenClaw-style agent spec in `clawbridge`.
 
 It groups three kinds of configuration:
 
-## Portable core
+## Shared OpenClaw fields
 
-These fields are the main cross-backend contract:
+These fields describe the agent regardless of which builder you use:
 
 - identity: `name`, `description`, `personality`, `role`
 - model config: `provider`, `model_id`, API key indirection
 - tools and skills: direct `ToolDefinition` values plus `ClawSkill`
 - prompt composition: `system_prompt`, `additional_instructions`
-- bridge-level memory: `memory_config`
+- memory helpers: `memory_config`
+- workspace loading: `workspace_path`, `workspace`
+- sandbox and channel policy: `sandbox`, `channel_policy`
 
-## Backend extensions
+## Framework-specific extensions
 
-These fields are meaningful, but their behavior depends on the backend:
+These fields are meaningful, but their behavior depends on the selected framework:
 
 - `storage`
 - `knowledge`
 - `channels`
-- `serve()`
 
-Use them when you need native backend capabilities, but do not assume identical semantics across runtimes.
+Use them when you need native framework capabilities, but do not assume identical behavior across Agno and Agentica.
 
 ## Prompt assembly
 
-`ClawAgent.build_system_prompt()` assembles instructions in this order:
-
-1. identity or description
-2. role
-3. custom system prompt
-4. memory context
-5. skill instructions
-6. additional instructions
-
-That ordering is part of the portable core and should remain stable.
+The prompt builder composes identity, tooling, workspace context, memory, sandbox state, runtime state, and extra instructions in a fixed OpenClaw-style order.

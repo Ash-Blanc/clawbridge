@@ -5,31 +5,25 @@
 <h1 align="center">clawbridge</h1>
 
 <p align="center">
-  <strong>Build AI agents in Python with skills, memory, and a clean starting point.</strong>
+  <strong>OpenClaw-style skills, prompts, and helpers for Agno and Agentica.</strong>
 </p>
 
 ## What Is clawbridge?
 
-`clawbridge` is a Python framework for building OpenClaw-style agents without forcing you to learn a large runtime up front.
+`clawbridge` is not a meta-framework and it does not try to unify agent runtimes.
 
-It gives you a small set of beginner-friendly building blocks:
+It helps you build OpenClaw-style agents inside frameworks you already want to use:
 
-- `ClawAgent` for the agent itself
-- `ClawBridge` for running it
-- `ClawSkill` for reusable skills
-- `ClawMemory` for remembering things between chats
+- Agno
+- Agentica
+- more adapters over time
 
-The first goal is simple: get a working agent running quickly.
+The shared value is OpenClaw conventions:
 
-## Start Here
-
-If you are new, use this order:
-
-1. Install the project
-2. Build your first agent
-3. Add one skill
-4. Add memory
-5. Explore advanced runtime details later
+- `ClawAgent` for OpenClaw-style agent config
+- `ClawSkill` for `SKILL.md` packages and callable tools
+- `ClawMemory` for lightweight memory helpers
+- framework-native builders like `build_agno_agent()` and `build_agentica_agent()`
 
 ## Install
 
@@ -37,16 +31,26 @@ If you are new, use this order:
 uv sync --extra all
 ```
 
-## Your First Agent
+## Start With A Workspace
 
-What you will build:
+The default onboarding path is an OpenClaw workspace:
 
-- one runnable agent
-- one backend-backed chat loop
-- one place to add skills and memory later
+```bash
+clawbridge scaffold ./my-workspace
+cd ./my-workspace
+clawbridge run --name Assistant --framework agno
+```
+
+If you want a starter multi-agent layout:
+
+```bash
+clawbridge scaffold ./my-workspace --multi-agent
+```
+
+## Build A Native Agno Agent
 
 ```python
-from clawbridge import ClawAgent, ClawBridge, ModelConfig
+from clawbridge import ClawAgent, ModelConfig, build_agno_agent
 
 agent = ClawAgent(
     name="Molty",
@@ -59,17 +63,25 @@ agent = ClawAgent(
     ),
 )
 
-bridge = ClawBridge(agent, backend="agno")
-print(bridge.chat("Say hello and tell me what you can do."))
+native_agent = build_agno_agent(agent)
+response = native_agent.run("Say hello and tell me what you can do.")
+print(getattr(response, "content", response))
 ```
 
-What you just built:
+## Build An Agentica Agent
 
-- a `ClawAgent`
-- a `ClawBridge`
-- a minimal working agent you can extend
+```python
+from clawbridge import ClawAgent, build_agentica_agent
 
-## Add A Skill
+agent = ClawAgent(
+    name="Molty",
+    personality="Helpful, clear, and concise.",
+)
+
+agentica_config = build_agentica_agent(agent)
+```
+
+## Add An OpenClaw Skill
 
 Create a skill folder:
 
@@ -87,53 +99,49 @@ def search_web(query: str) -> str:
     return f"Results for: {query}"
 ```
 
-Then load it:
+Then attach it to the agent:
 
 ```python
 from pathlib import Path
 
-from clawbridge import ClawAgent, ClawBridge, ClawSkill
+from clawbridge import ClawAgent, ClawSkill, build_agno_agent
 
 skill = ClawSkill.from_skill_md(Path("./skills/web_search"))
-
 agent = ClawAgent(name="Molty", skills=[skill])
-bridge = ClawBridge(agent, backend="agno")
+native_agent = build_agno_agent(agent)
 ```
 
-## Add Memory
+## Memory Helpers
+
+`ClawMemory` is a lightweight helper for OpenClaw-style memory injection. It is not a claim of cross-framework memory parity.
 
 ```python
-bridge.memory.remember("user_name", "Alice", category="preference")
-print(bridge.memory.recall("user_name"))
+from clawbridge import ClawMemory
+
+memory = ClawMemory()
+memory.remember("user_name", "Alice", category="preference")
+print(memory.recall("user_name"))
 ```
 
 ## CLI
 
 ```bash
-clawbridge run --name Molty --backend agno --provider anthropic
+clawbridge scaffold ./my-workspace
+clawbridge run --name Molty --framework agno --provider anthropic
 clawbridge skills --dir ./skills
-clawbridge serve --backend agno --port 8000
+clawbridge serve --port 8000
 ```
 
-## Learn Next
+Use `clawbridge scaffold` for OpenClaw-style workspace onboarding.
 
-If you are new, this is the order to follow:
+`clawbridge dev` and `clawbridge init` remain available as optional Agno deployment helpers.
 
-1. Build your first agent
-2. Add one skill
-3. Add memory
-4. Try the CLI
-5. Only then look at advanced topics like backend-specific behavior or app mode
+## Migration From `init`
 
-## Advanced Notes
+If you previously started with `clawbridge init`, the new split is:
 
-`clawbridge` also supports:
-
-- loading OpenClaw-style `SKILL.md` packages
-- switching between supported backends
-- Agno-specific compile and app-mode helpers
-
-Those are useful, but they are not the first thing a new user needs to understand.
+1. Use `clawbridge scaffold` when you want an OpenClaw-style workspace with `AGENTS.md`, `BOOTSTRAP.md`, `MEMORY.md`, starter skills, and optional multi-agent config.
+2. Use `clawbridge init` only when you specifically want the optional Agno deployment helper.
 
 ## Development
 

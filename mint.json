@@ -53,10 +53,7 @@
         "pages": [
           "docs/backends/agno",
           "docs/backends/agentica",
-          "docs/guides/gateways",
-          "docs/guides/app-mode",
-          "docs/architecture/folder-structure",
-          "docs/architecture/routing"
+          "docs/guides/gateways"
         ]
       }
     ]

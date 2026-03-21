@@ -1,8 +1,4 @@
-"""
-ClawAgent — the universal, framework-agnostic agent definition.
-
-Define once, deploy to Agno, Agentica, CrewAI, LangChain, etc.
-"""
+"""OpenClaw-style agent spec used by framework builders."""
 
 from __future__ import annotations
 
@@ -11,8 +7,13 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from clawbridge.core.channel import ChannelSessionPolicy
 from clawbridge.core.memory import ClawMemory
-from clawbridge.core.skill import ClawSkill
+from clawbridge.core.prompt import OpenClawPromptBuilder, OpenClawPromptContext, OpenClawPromptMode
+from clawbridge.core.sandbox import SandboxConfig
+from clawbridge.core.session import OpenClawSessionContext
+from clawbridge.core.skill import ClawSkill, SkillLoadRecord
+from clawbridge.core.workspace import OpenClawWorkspace
 from clawbridge.core.types import (
     ChannelConfig,
     KnowledgeConfig,
@@ -25,10 +26,10 @@ from clawbridge.core.types import (
 
 class ClawAgent(BaseModel):
     """
-    A universal agent definition inspired by OpenClaw's architecture.
+    OpenClaw-style agent configuration shared by supported builders.
 
-    This is the single source of truth — backends compile this into
-    their native agent representations.
+    This model owns prompt structure, skills, tools, and lightweight memory.
+    Framework-specific integrations may consume additional builder options.
     """
 
     # ── Identity ──
@@ -42,33 +43,38 @@ class ClawAgent(BaseModel):
 
     # ── Skills & Tools ──
     skills: list[ClawSkill] = Field(default_factory=list)
+    skill_resolution: list[SkillLoadRecord] = Field(default_factory=list)
     tools: list[ToolDefinition] = Field(default_factory=list)
     skill_paths: list[Path] = Field(default_factory=list)
+    workspace_path: Path | None = None
+    workspace: OpenClawWorkspace | None = None
 
     # ── Memory ──
     memory_config: MemoryConfig = Field(default_factory=MemoryConfig)
 
-    # ── Native Backend Configurations ──
+    # ── Sandbox ──
+    sandbox: SandboxConfig = Field(default_factory=SandboxConfig)
+    channel_policy: ChannelSessionPolicy = Field(default_factory=ChannelSessionPolicy)
+
+    # ── Agno-specific Extensions ──
     storage: StorageConfig = Field(default_factory=StorageConfig)
     knowledge: KnowledgeConfig = Field(default_factory=KnowledgeConfig)
     channels: list[ChannelConfig] = Field(default_factory=list)
 
     # ── System Prompt ──
+    prompt_mode: OpenClawPromptMode = OpenClawPromptMode.FULL
     system_prompt: str = ""
     # Additional instructions appended after skills
     additional_instructions: list[str] = Field(default_factory=list)
 
-    # ── Behavior ──
-    autonomous: bool = True        # can act without explicit prompts
-    human_in_loop: bool = False    # require confirmation for actions
-    max_iterations: int = 10       # max tool-use loops per turn
+    # ── Rendering ──
     markdown_output: bool = True
 
     # ── Metadata ──
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = {"arbitrary_types_allowed": True, "extra": "ignore"}
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> ClawAgent:
@@ -96,50 +102,30 @@ class ClawAgent(BaseModel):
         data = json.loads(p.read_text(encoding="utf-8"))
         return cls(**data)
 
-    def build_system_prompt(self, memory: ClawMemory | None = None) -> str:
-        """
-        Compose the full system prompt from all components.
-
-        Order (mirrors OpenClaw's prompt assembly):
-          1. Base identity / personality
-          2. Role instructions
-          3. Memory context
-          4. Skill instructions (each skill's SKILL.md body)
-          5. Additional instructions
-        """
-        parts: list[str] = []
-
-        # 1. Identity
-        if self.personality:
-            parts.append(f"# Personality\n{self.personality}")
-        elif self.description:
-            parts.append(f"# About You\n{self.description}")
-
-        # 2. Role
-        if self.role:
-            parts.append(f"# Your Role\n{self.role}")
-
-        # 3. Custom system prompt
-        if self.system_prompt:
-            parts.append(self.system_prompt)
-
-        # 4. Memory context
-        if memory:
-            ctx = memory.get_context_summary()
-            if ctx:
-                parts.append(ctx)
-
-        # 5. Skills
-        if self.skills:
-            parts.append("# Skills")
-            for skill in self.skills:
-                parts.append(skill.to_system_prompt_fragment())
-
-        # 6. Additional instructions
-        for instr in self.additional_instructions:
-            parts.append(instr)
-
-        return "\n\n".join(parts)
+    def build_system_prompt(
+        self,
+        memory: ClawMemory | None = None,
+        *,
+        prompt_context: OpenClawPromptContext | None = None,
+        prompt_mode: OpenClawPromptMode | None = None,
+        session_context: OpenClawSessionContext | None = None,
+    ) -> str:
+        """Compose an OpenClaw-style system prompt."""
+        builder = OpenClawPromptBuilder()
+        effective_prompt_context = prompt_context
+        if session_context is not None:
+            effective_prompt_context = (
+                prompt_context.model_copy(deep=True)
+                if prompt_context is not None
+                else OpenClawPromptContext()
+            )
+            effective_prompt_context.session = session_context
+        return builder.build(
+            self,
+            memory=memory,
+            context=effective_prompt_context,
+            mode=prompt_mode or self.prompt_mode,
+        )
 
     def get_all_tools(self) -> list[ToolDefinition]:
         """Collect tools from both direct definitions and skills, deduplicating by name."""

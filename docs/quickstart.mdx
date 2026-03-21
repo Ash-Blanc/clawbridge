@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: "Get a working agent running in a few minutes"
+description: "Get a workspace-backed OpenClaw agent running in a few minutes"
 ---
 
 # Quickstart
@@ -9,6 +9,7 @@ description: "Get a working agent running in a few minutes"
 
 By the end of this page, you will have:
 
+- one OpenClaw workspace
 - one running agent
 - one model connection
 - one place to add memory and skills next
@@ -25,38 +26,35 @@ uv sync --extra all
 export ANTHROPIC_API_KEY="sk-..."
 ```
 
-### 3. Create your first agent
+### 3. Create a workspace
 
-```python
-from clawbridge import ClawAgent, ClawBridge, ModelConfig
-
-agent = ClawAgent(
-    name="Molty",
-    description="Portable personal assistant",
-    personality="Helpful and concise.",
-    model=ModelConfig(
-        provider="anthropic",
-        model_id="claude-sonnet-4-20250514",
-        api_key_env="ANTHROPIC_API_KEY",
-    ),
-)
-
-bridge = ClawBridge(agent, backend="agno")
-print(bridge.chat("What can you do?"))
+```bash
+clawbridge scaffold ./my-workspace
+cd ./my-workspace
 ```
 
-### 4. Teach it something
+This gives you:
+
+- the standard workspace files like `AGENTS.md`, `MEMORY.md`, and `BOOTSTRAP.md`
+- a starter skill in `skills/hello_world/`
+- an `agent.yaml` that `clawbridge` can load directly
+
+### 4. Run the starter agent
 
 ```python
-bridge.memory.remember("user_name", "Alice", category="preference")
-print(bridge.memory.recall("user_name"))
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+response = native_agent.run("What can you do?")
+print(getattr(response, "content", response))
 ```
 
 ## What you just built
 
 - a `ClawAgent`
-- a `ClawBridge`
-- a minimal memory-enabled chat loop
+- a workspace-backed prompt
+- a native Agno agent
 
 ## Next steps
 
@@ -64,4 +62,4 @@ print(bridge.memory.recall("user_name"))
 - try the CLI
 - move on to guides and examples
 
-Backend-specific and architecture details come later in the docs.
+Framework-specific deployment details come later in the docs.

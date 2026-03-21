@@ -32,11 +32,11 @@ def search_web(query: str) -> str:
 ```python
 from pathlib import Path
 
-from clawbridge import ClawAgent, ClawBridge, ClawSkill
+from clawbridge import ClawAgent, ClawSkill, build_agno_agent
 
 skill = ClawSkill.from_skill_md(Path("./skills/web_search"))
 agent = ClawAgent(name="Molty", skills=[skill])
-bridge = ClawBridge(agent, backend="agno")
+native_agent = build_agno_agent(agent)
 ```
 
 Start with one skill. Keep it obvious. Avoid building a giant skills tree before your first agent works.

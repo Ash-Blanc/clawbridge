@@ -12,7 +12,7 @@ Start with the smallest working version:
 Build one agent that can answer a prompt successfully.
 
 ```python
-from clawbridge import ClawAgent, ClawBridge, ModelConfig
+from clawbridge import ClawAgent, ModelConfig, build_agno_agent
 
 agent = ClawAgent(
     name="Molty",
@@ -25,15 +25,16 @@ agent = ClawAgent(
     ),
 )
 
-bridge = ClawBridge(agent, backend="agno")
-print(bridge.chat("Say hello."))
+native_agent = build_agno_agent(agent)
+response = native_agent.run("Say hello.")
+print(getattr(response, "content", response))
 ```
 
 ## What each part does
 
 - `ClawAgent` defines the assistant
 - `ModelConfig` tells it which model to use
-- `ClawBridge` runs it
+- `build_agno_agent()` returns a native Agno agent
 
 ## After this works
 

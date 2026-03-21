@@ -8,11 +8,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 
-class Backend(StrEnum):
-    AGNO = "agno"
-    AGENTICA = "agentica"
-
-
 class LLMProvider(StrEnum):
     OPENAI = "openai"
     ANTHROPIC = "anthropic"
@@ -22,7 +17,7 @@ class LLMProvider(StrEnum):
 
 
 class ModelConfig(BaseModel):
-    """LLM model configuration — framework-agnostic."""
+    """LLM model configuration for supported framework builders."""
 
     provider: LLMProvider = LLMProvider.ANTHROPIC
     model_id: str = "claude-sonnet-4-20250514"
@@ -86,6 +81,10 @@ class KnowledgeConfig(BaseModel):
     type: VectorDbType = VectorDbType.LANCEDB
     db_url: str = "tmp/lancedb"
     table_name: str = "agent_knowledge"
+    search: bool = True
+    add_to_context: bool = False
+    max_results: int = 10
+    embedder_model_id: str | None = None
     # Will typically contain paths or URLs to ingest
     sources: list[str] = Field(default_factory=list)
 
@@ -102,7 +101,7 @@ class ChannelConfig(BaseModel):
     type: ChannelType
     token_env: str  # The environment variable holding the auth token
     bot_id_env: str | None = None
-    verification_token_env: str | None = None
+    verification_token_env: str | None = None  # Slack signing secret or WhatsApp verify token
 
     @property
     def token(self) -> str | None:

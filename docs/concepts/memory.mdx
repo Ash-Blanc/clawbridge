@@ -1,15 +1,15 @@
 ---
 title: Memory
-description: "Bridge-level memory and backend-native storage"
+description: "ClawMemory helpers and framework-native storage"
 ---
 
 # Memory
 
-`clawbridge` has two distinct memory layers:
+There are two memory layers in `clawbridge`:
 
-## Bridge-level memory
+## `ClawMemory`
 
-`ClawMemory` is the portable memory object shared by `ClawBridge` and its backend instances.
+`ClawMemory` is the lightweight memory helper used by `clawbridge` prompt assembly and runtime wrappers.
 
 It provides:
 
@@ -17,15 +17,13 @@ It provides:
 - short-term conversation history
 - prompt-time memory summaries
 
-This is the part that stays stable when you switch backends inside `ClawBridge`.
+## Framework-native storage
 
-## Backend-native storage
-
-Some backends can also map `ClawAgent.storage` into native storage primitives.
+Some frameworks can also map `ClawAgent.storage` into native storage primitives.
 
 Today:
 
 - Agno has native storage support
 - Agentica does not
 
-That means the same `ClawAgent` can share the same `ClawMemory` object across runtimes while still having backend-specific storage behavior underneath.
+Use `ClawMemory` for prompt-time and lightweight state, and use native storage only when your target framework supports it.

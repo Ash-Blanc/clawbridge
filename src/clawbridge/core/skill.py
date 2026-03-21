@@ -3,12 +3,13 @@ OpenClaw SKILL.md parser and skill model.
 
 OpenClaw skills are directories containing a SKILL.md file with YAML
 frontmatter and markdown instructions. This module parses them into a
-framework-agnostic ClawSkill model.
+reusable ClawSkill model.
 """
 
 from __future__ import annotations
 
 import re
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -18,9 +19,47 @@ from pydantic import BaseModel, Field
 from clawbridge.core.types import ToolDefinition, ToolParameter
 
 
+class SkillSourceKind(StrEnum):
+    """Skill source categories used for precedence resolution."""
+
+    INLINE = "inline"
+    WORKSPACE = "workspace"
+    MANAGED = "managed"
+    BUNDLED = "bundled"
+    EXTRA = "extra"
+
+
+class SkillLoadStatus(StrEnum):
+    """Resolution outcomes for discovered skills."""
+
+    LOADED = "loaded"
+    SHADOWED = "shadowed"
+    GATED = "gated"
+
+
+class SkillRequirements(BaseModel):
+    """Environment and config requirements declared by a skill."""
+
+    env_vars: list[str] = Field(default_factory=list)
+    binaries: list[str] = Field(default_factory=list)
+    config_keys: list[str] = Field(default_factory=list)
+
+
+class SkillLoadRecord(BaseModel):
+    """Resolution record for a discovered or inline skill."""
+
+    skill_name: str
+    source_kind: SkillSourceKind
+    source_path: Path | None = None
+    status: SkillLoadStatus
+    reason: str | None = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+
 class ClawSkill(BaseModel):
     """
-    A parsed OpenClaw skill — the universal skill representation.
+    A parsed OpenClaw skill representation.
 
     Mirrors the SKILL.md format:
       ---
@@ -52,10 +91,14 @@ class ClawSkill(BaseModel):
     instructions: str = ""
     # Parsed tool definitions from frontmatter
     tools: list[ToolDefinition] = Field(default_factory=list)
+    requirements: SkillRequirements = Field(default_factory=SkillRequirements)
     # Raw frontmatter for extensions
     metadata: dict[str, Any] = Field(default_factory=dict)
     # Source path
     source_path: Path | None = None
+    source_kind: SkillSourceKind | None = None
+
+    model_config = {"arbitrary_types_allowed": True}
 
     @classmethod
     def from_dir(cls, path: Path) -> ClawSkill:
@@ -71,6 +114,7 @@ class ClawSkill(BaseModel):
         if skill_file.exists():
             content = skill_file.read_text(encoding="utf-8")
             frontmatter, body = cls._parse_frontmatter(content)
+            requirements = cls._parse_requirements(frontmatter)
             
             raw_tools = frontmatter.pop("tools", []) or []
             tools = []
@@ -96,6 +140,7 @@ class ClawSkill(BaseModel):
                 tags=frontmatter.get("tags", []),
                 instructions=body.strip(),
                 tools=tools,
+                requirements=requirements,
                 metadata=frontmatter,
                 source_path=path,
             )
@@ -184,6 +229,36 @@ class ClawSkill(BaseModel):
             return fm, body
         return {}, content
 
+    @staticmethod
+    def _parse_requirements(frontmatter: dict[str, Any]) -> SkillRequirements:
+        """Parse supported skill gating requirements from frontmatter."""
+        raw_requires = frontmatter.get("requires") or {}
+
+        env_values = (
+            raw_requires.get("env")
+            or raw_requires.get("env_vars")
+            or frontmatter.get("requires_env")
+            or []
+        )
+        binary_values = (
+            raw_requires.get("binaries")
+            or raw_requires.get("binary")
+            or frontmatter.get("requires_binaries")
+            or []
+        )
+        config_values = (
+            raw_requires.get("config")
+            or raw_requires.get("config_keys")
+            or frontmatter.get("requires_config")
+            or []
+        )
+
+        return SkillRequirements(
+            env_vars=_normalize_requirement_list(env_values),
+            binaries=_normalize_requirement_list(binary_values),
+            config_keys=_normalize_requirement_list(config_values),
+        )
+
     def to_system_prompt_fragment(self) -> str:
         """Convert skill into a system prompt fragment for injection."""
         parts = [f"## Skill: {self.name}"]
@@ -199,3 +274,13 @@ class ClawSkill(BaseModel):
                 )
                 parts.append(f"- **{tool.name}**({param_str}): {tool.description}")
         return "\n\n".join(parts)
+
+
+def _normalize_requirement_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item).strip()]
+    return [str(value)]

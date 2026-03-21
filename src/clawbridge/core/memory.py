@@ -2,7 +2,7 @@
 Cross-session memory abstraction — a key OpenClaw pattern.
 
 OpenClaw maintains persistent and adaptive behavior across sessions.
-This module provides the same capability in a framework-agnostic way.
+This module provides lightweight memory helpers that builders can inject.
 """
 
 from __future__ import annotations

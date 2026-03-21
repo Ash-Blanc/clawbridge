@@ -1,9 +1,18 @@
+import sys
+from types import ModuleType
 from importlib.util import find_spec
 
 import pytest
-from clawbridge.core.agent import ClawAgent
-from clawbridge.core.types import ModelConfig, LLMProvider
 from clawbridge.backends.agno import AgnoBackend
+from clawbridge.core.agent import ClawAgent
+from clawbridge.core.skill import ClawSkill
+from clawbridge.core.types import (
+    ChannelConfig,
+    ChannelType,
+    LLMProvider,
+    ModelConfig,
+    ToolDefinition,
+)
 
 
 def test_agno_backend_compile():
@@ -38,7 +47,88 @@ def test_agno_backend_compile():
     from agno.models.openai import OpenAIChat
     assert isinstance(native_agent.model, OpenAIChat)
     assert native_agent.model.id == "gpt-4o"
+    assert native_agent.model.temperature == 0.7
+    assert native_agent.model.max_tokens == 4096
     
     # Check memory/db
     from agno.db.in_memory import InMemoryDb
     assert isinstance(native_agent.db, InMemoryDb)
+
+
+def test_agno_backend_rejects_tools_without_callables() -> None:
+    agent = ClawAgent(
+        name="TestAgent",
+        skills=[
+            ClawSkill(
+                name="web",
+                tools=[
+                    ToolDefinition(
+                        name="search_web",
+                        description="Search the web.",
+                    )
+                ],
+            )
+        ],
+    )
+
+    backend = AgnoBackend(agent)
+
+    with pytest.raises(ValueError, match="Missing implementations for: search_web"):
+        backend._build_tools()
+
+
+def test_agno_backend_builds_interfaces_with_native_agent(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    class FakeSlack:
+        def __init__(self, **kwargs):
+            captured["slack"] = kwargs
+
+    class FakeWhatsapp:
+        def __init__(self, **kwargs):
+            captured["whatsapp"] = kwargs
+
+    slack_module = ModuleType("agno.os.interfaces.slack")
+    slack_module.Slack = FakeSlack
+    whatsapp_module = ModuleType("agno.os.interfaces.whatsapp")
+    whatsapp_module.Whatsapp = FakeWhatsapp
+
+    monkeypatch.setitem(sys.modules, "agno.os.interfaces.slack", slack_module)
+    monkeypatch.setitem(sys.modules, "agno.os.interfaces.whatsapp", whatsapp_module)
+    monkeypatch.setenv("SLACK_TOKEN", "xoxb-test")
+    monkeypatch.setenv("SLACK_SIGNING_SECRET", "secret")
+    monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "wa-token")
+    monkeypatch.setenv("WHATSAPP_VERIFY_TOKEN", "wa-verify")
+    monkeypatch.setenv("WHATSAPP_PHONE_NUMBER_ID", "wa-phone")
+
+    agent = ClawAgent(
+        name="Interfaces",
+        channels=[
+            ChannelConfig(
+                type=ChannelType.SLACK,
+                token_env="SLACK_TOKEN",
+                verification_token_env="SLACK_SIGNING_SECRET",
+            ),
+            ChannelConfig(
+                type=ChannelType.WHATSAPP,
+                token_env="WHATSAPP_ACCESS_TOKEN",
+                verification_token_env="WHATSAPP_VERIFY_TOKEN",
+                bot_id_env="WHATSAPP_PHONE_NUMBER_ID",
+            ),
+        ],
+    )
+
+    backend = AgnoBackend(agent)
+    sentinel_agent = object()
+    backend._native_agent = sentinel_agent
+
+    interfaces = backend._build_interfaces()
+
+    assert len(interfaces) == 2
+    assert captured["slack"]["agent"] is sentinel_agent
+    assert captured["slack"]["token"] == "xoxb-test"
+    assert captured["slack"]["signing_secret"] == "secret"
+    assert captured["whatsapp"]["agent"] is sentinel_agent
+    assert captured["whatsapp"]["access_token"] == "wa-token"
+    assert captured["whatsapp"]["verify_token"] == "wa-verify"
+    assert captured["whatsapp"]["phone_number_id"] == "wa-phone"

@@ -1,7 +1,7 @@
 [project]
 name = "clawbridge"
 version = "0.1.0"
-description = "Deploy OpenClaw-like agents to any AI agent framework"
+description = "Build OpenClaw-style agents inside frameworks like Agno and Agentica"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [
@@ -12,7 +12,20 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-agno = ["agno>=1.1", "fastapi", "uvicorn", "anthropic", "openai", "groq"]
+agno = [
+    "agno>=1.1",
+    "fastapi",
+    "uvicorn",
+    "anthropic",
+    "openai",
+    "groq",
+    "sqlalchemy>=2.0",
+    "psycopg>=3.0",
+    "pgvector>=0.3",
+    "lancedb>=0.24",
+    "pyarrow>=18.0",
+    "slack-sdk>=3.0",
+]
 agentica = ["symbolica-agentica>=0.3"]
 all = ["clawbridge[agno,agentica]"]
 dev = ["pytest>=8.0", "ruff>=0.8", "mypy>=1.13", "types-PyYAML"]

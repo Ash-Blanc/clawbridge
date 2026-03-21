@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 from pathlib import Path
 
 from rich.console import Console
@@ -15,14 +16,24 @@ console = Console()
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="clawbridge",
-        description="🦞 Deploy OpenClaw-like agents to any framework",
+        description=(
+            "Build OpenClaw-style agents inside Agno or Agentica. "
+            "Start with `clawbridge scaffold` for a workspace-first flow."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  clawbridge scaffold ./my-workspace\n"
+            "  clawbridge scaffold ./my-workspace --multi-agent\n"
+            "  clawbridge init my-claw-app  # optional Agno deployment helper\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="command")
 
     # ── run ──
-    run_p = sub.add_parser("run", help="Run an agent interactively")
+    run_p = sub.add_parser("run", help="Run an OpenClaw-style agent inside a framework")
     run_p.add_argument("--name", default="Claw")
-    run_p.add_argument("--backend", default="agno", choices=["agno", "agentica"])
+    run_p.add_argument("--framework", default="agno", choices=["agno", "agentica"])
     run_p.add_argument("--model", default="claude-sonnet-4-20250514")
     run_p.add_argument("--provider", default="anthropic")
     run_p.add_argument("--skills-dir", type=Path, default=None)
@@ -33,18 +44,43 @@ def main() -> None:
     skills_p.add_argument("--dir", type=Path, default=Path("./skills"))
 
     # ── dev ──
-    dev_p = sub.add_parser("dev", help="Start the optional Agno app-mode development server")
+    dev_p = sub.add_parser("dev", help="Start the optional Agno deployment helper server")
     dev_p.add_argument("--host", default="127.0.0.1")
     dev_p.add_argument("--port", type=int, default=8000)
 
     # ── serve ──
-    serve_p = sub.add_parser("serve", help="Serve agent as HTTP API")
-    serve_p.add_argument("--backend", default="agno")
+    serve_p = sub.add_parser("serve", help="Build and serve a native Agno agent")
     serve_p.add_argument("--port", type=int, default=8000)
     serve_p.add_argument("--host", default="0.0.0.0")
 
     # ── init ──
-    init_p = sub.add_parser("init", help="Initialize a new Agno app-mode project")
+    scaffold_p = sub.add_parser(
+        "scaffold",
+        help="Create an OpenClaw workspace scaffold (recommended)",
+    )
+    scaffold_p.add_argument(
+        "path",
+        nargs="?",
+        default=".",
+        help="Workspace directory to create",
+    )
+    scaffold_p.add_argument("--agent-name", default="Assistant")
+    scaffold_p.add_argument(
+        "--multi-agent",
+        action="store_true",
+        help="Also create a sample multi-agent config (agents.yaml)",
+    )
+    scaffold_p.add_argument(
+        "--force",
+        action="store_true",
+        help="Allow scaffolding into a non-empty directory",
+    )
+
+    # ── init ──
+    init_p = sub.add_parser(
+        "init",
+        help="Initialize an optional Agno deployment helper project",
+    )
     init_p.add_argument("name", nargs="?", default="my-claw-app", help="Project directory name")
 
     args = parser.parse_args()
@@ -58,6 +94,8 @@ def main() -> None:
             _cmd_serve(args)
         case "dev":
             _cmd_dev(args)
+        case "scaffold":
+            _cmd_scaffold(args)
         case "init":
             _cmd_init(args)
         case _:
@@ -70,32 +108,62 @@ def _cmd_dev(args: argparse.Namespace) -> None:
     console = Console()
     
     app = ClawApp()
-    console.print(f"🦞 Starting ClawBridge Dev Server on http://{args.host}:{args.port}")
+    console.print(f"🦞 Starting optional Agno helper on http://{args.host}:{args.port}")
     try:
         app.serve(host=args.host, port=args.port, reload=True)
     except Exception as e:
         console.print(f"[bold red]Failed to start server:[/bold red] {e}")
 
 
-def _cmd_run(args: argparse.Namespace) -> None:
-    from clawbridge.bridge import create_agent
+def _cmd_scaffold(args: argparse.Namespace) -> None:
+    from clawbridge.scaffold import create_openclaw_workspace
 
-    skill_paths = [str(args.skills_dir)] if args.skills_dir else []
+    try:
+        workspace_dir = create_openclaw_workspace(
+            args.path,
+            agent_name=args.agent_name,
+            include_multi_agent=args.multi_agent,
+            force=args.force,
+        )
+    except FileExistsError as exc:
+        console.print(f"[bold red]Error:[/bold red] {exc}")
+        return
 
-    bridge = create_agent(
-        name=args.name,
-        backend=args.backend,
-        model=args.model,
-        provider=args.provider,
-        skills=skill_paths,
-        personality=args.personality,
+    console.print(
+        f"[bold green]OpenClaw workspace scaffolded at:[/bold green] {workspace_dir}"
+    )
+    console.print(
+        "\nNext steps:\n"
+        f"  cd {workspace_dir}\n"
+        "  clawbridge run --framework agno --name Assistant\n"
+        "  # or: clawbridge run --framework agentica --name Assistant\n"
     )
 
+
+def _cmd_run(args: argparse.Namespace) -> None:
+    from clawbridge.builders import build_agno_agent, build_agentica_agent, load_agent_config
+    from clawbridge.core.agent import ClawAgent
+    from clawbridge.core.types import ModelConfig
+
+    skill_paths = [args.skills_dir] if args.skills_dir else []
+
+    agent = ClawAgent(
+        name=args.name,
+        model=ModelConfig(provider=args.provider, model_id=args.model),  # type: ignore[arg-type]
+        skill_paths=skill_paths,
+        personality=args.personality,
+    )
+    prepared_agent = load_agent_config(agent)
+    if args.framework == "agno":
+        native_agent = build_agno_agent(agent)
+    else:
+        native_agent = build_agentica_agent(agent)
+
     console.print(Panel(
-        f"🦞 [bold]{bridge.agent.name}[/bold] ready "
-        f"([cyan]{args.backend}[/cyan] backend)\n"
+        f"🦞 [bold]{agent.name}[/bold] ready "
+        f"([cyan]{args.framework}[/cyan] framework)\n"
         f"Model: {args.provider}/{args.model}\n"
-        f"Skills: {len(bridge.agent.skills)} loaded\n"
+        f"Skills: {len(prepared_agent.skills)} loaded\n"
         f"Type [bold red]quit[/bold red] to exit.",
         title="clawbridge",
     ))
@@ -109,8 +177,28 @@ def _cmd_run(args: argparse.Namespace) -> None:
         if user_input.strip().lower() in ("quit", "exit", "q"):
             break
 
-        response = bridge.chat(user_input)
-        console.print(f"[bold blue]{bridge.agent.name}:[/bold blue] {response}\n")
+        if args.framework == "agno":
+            response = asyncio.run(native_agent.arun(user_input))
+            content = getattr(response, "content", response)
+        else:
+            try:
+                from agentica import spawn  # type: ignore[import-untyped]
+            except ImportError as exc:
+                raise ImportError(
+                    "Agentica runtime support requires the agentica package. "
+                    "Install clawbridge[agentica]."
+                ) from exc
+
+            spawned = asyncio.run(
+                spawn(
+                    native_agent.system_prompt,
+                    native_agent.scope,
+                    model=native_agent.model,
+                )
+            )
+            content = asyncio.run(spawned(user_input)) if callable(spawned) else str(spawned)
+
+        console.print(f"[bold blue]{agent.name}:[/bold blue] {content}\n")
 
 
 def _cmd_skills(args: argparse.Namespace) -> None:
@@ -140,15 +228,12 @@ def _cmd_skills(args: argparse.Namespace) -> None:
 
 
 def _cmd_serve(args: argparse.Namespace) -> None:
-    import asyncio
-    from clawbridge.bridge import create_agent
+    from clawbridge.backends.agno import AgnoBackend
+    from clawbridge.core.agent import ClawAgent
 
-    bridge = create_agent(backend=args.backend)
-    console.print(
-        f"🦞 Serving on http://{args.host}:{args.port} "
-        f"({args.backend} backend)"
-    )
-    asyncio.run(bridge.serve(host=args.host, port=args.port))
+    backend = AgnoBackend(ClawAgent())
+    console.print(f"🦞 Serving native Agno agent on http://{args.host}:{args.port}")
+    asyncio.run(backend.serve(host=args.host, port=args.port))
 
 
 def _cmd_init(args: argparse.Namespace) -> None:
@@ -165,8 +250,8 @@ def _cmd_init(args: argparse.Namespace) -> None:
     (project_dir / "knowledge").mkdir()
     
     # 1. Global config
-    config_yaml = """name: My ClawBridge App
-description: A multi-agent AI project.
+    config_yaml = """name: My ClawBridge Agno Deployment
+description: An optional Agno deployment helper using OpenClaw-style skills and prompts.
 server:
   host: 127.0.0.1
   port: 8000
@@ -213,7 +298,9 @@ This skill provides a simple greeting capability.
     # 4. Sample knowledge
     (project_dir / "knowledge" / "readme.md").write_text("# Knowledge Base\nDrop documents here to be ingested by agents.\n")
 
-    console.print(f"🦞 [bold green]Successfully initialized '{args.name}'[/bold green]")
+    console.print(
+        f"🦞 [bold green]Initialized optional Agno deployment helper '{args.name}'[/bold green]"
+    )
     console.print(f"\nNext steps:\n  cd {args.name}\n  clawbridge dev\n")
 
 

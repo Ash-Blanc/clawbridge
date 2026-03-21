@@ -2,14 +2,14 @@
 title: Building OpenClaws
 ---
 
-# Building Portable Agents
+# Building OpenClaw-Style Agents
 
 OpenClaw-inspired agents in `clawbridge` are defined by:
 
-1. **Identity** via `ClawAgent`
-2. **Prompt assembly** via `build_system_prompt()`
-3. **Capabilities** via `ClawSkill` and `ToolDefinition`
-4. **Memory** via `ClawMemory`
-5. **Runtime choice** via `ClawBridge`
+1. **Workspace files** like `AGENTS.md`, `MEMORY.md`, and `BOOTSTRAP.md`
+2. **Agent config** via `ClawAgent`
+3. **Prompt assembly** via `build_system_prompt()`
+4. **Capabilities** via `ClawSkill` and `ToolDefinition`
+5. **Runtime choice** via `build_agno_agent()` or `build_agentica_agent()`
 
-Start with the portable core first. Add backend-specific features only when you need them.
+Start with the workspace and agent config first. Add framework-specific features only when you need them.

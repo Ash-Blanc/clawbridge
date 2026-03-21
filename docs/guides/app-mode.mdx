@@ -1,11 +1,11 @@
 ---
-title: App Mode
-description: "Optional filesystem-driven Agno workflow"
+title: Agno Deployment Helper
+description: "Optional filesystem-driven Agno deployment helper"
 ---
 
-# App Mode
+# Agno Deployment Helper
 
-App mode is the optional, Agno-oriented workflow built around `ClawApp`.
+This is the optional, filesystem-driven Agno deployment helper built around `clawbridge.app.ClawApp`.
 
 It scans a project layout like this:
 
@@ -19,7 +19,7 @@ claw.config.yaml
 
 ## When to use it
 
-Use app mode when:
+Use it when:
 
 - your deployment target is Agno
 - you want project scaffolding and filesystem discovery
@@ -27,12 +27,13 @@ Use app mode when:
 
 ## When not to use it
 
-Do not treat app mode as the portable core API.
+Do not treat this helper as the main `clawbridge` API.
 
-If you care most about backend portability, start with:
+If you want the default `clawbridge` flow, start with:
 
 - `ClawAgent`
 - `ClawSkill`
-- `ClawBridge`
+- `clawbridge scaffold`
+- `build_agno_agent()` or `build_agentica_agent()`
 
-Then add app mode only if an Agno filesystem workflow is useful for your project.
+Only reach for it if an Agno filesystem deployment flow is useful for your project.

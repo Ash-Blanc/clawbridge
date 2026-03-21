@@ -1,15 +1,15 @@
 ---
 title: Agentica Backend
-description: "Portable core mapped onto Agentica scope objects"
+description: "OpenClaw-style config mapped onto Agentica scope objects"
 ---
 
 # Agentica Backend
 
-Agentica is supported through `ClawBridge(..., backend="agentica")`.
+Agentica is supported through `build_agentica_agent(...)`.
 
 ## What works
 
-- portable `ClawAgent` definitions
+- `ClawAgent` prompt and workspace loading
 - prompt assembly through `ClawAgent.build_system_prompt()`
 - direct callable tools exposed into scope
 - placeholder scope objects for schema-only skill tools
@@ -19,8 +19,8 @@ Agentica is supported through `ClawBridge(..., backend="agentica")`.
 
 Agentica support is real, but narrower than Agno support:
 
-- there is no direct `compile_to_agentica()` helper
+- `build_agentica_agent(...)` returns config rather than a long-lived native runtime object
 - `storage`, `knowledge`, and `channels` are not mapped to native Agentica features
 - execution semantics depend on Agentica's spawn and callable interaction model
 
-Use Agentica when you want the portable core plus live-object style execution, not when you need full parity with Agno-specific features.
+Use Agentica when you want OpenClaw-style prompts and skills with live-object execution, not when you need parity with Agno-specific features.
