@@ -1,35 +1,47 @@
 ---
 title: Introduction
-description: "Portable agent definitions with backend-specific runtimes"
+description: "A beginner-friendly way to build AI agents in Python"
 ---
 
 # clawbridge
 
-`clawbridge` is a Python meta-framework for **portable agent definitions**.
+`clawbridge` is a Python framework for building AI agents with a small, readable set of primitives.
 
-The core idea is simple:
+If you are new to the project, think of it like this:
 
-1. Define an agent once with `ClawAgent`
-2. Attach skills, tools, and memory
-3. Run it through `ClawBridge` on a supported backend
+1. Create an agent
+2. Run it
+3. Add skills
+4. Add memory
+5. Explore advanced features later
 
-The portable core is built from:
+## Start here
+
+Follow this path in order:
+
+1. Quickstart
+2. Your First Agent
+3. Add Skills
+4. Add Memory
+
+The main objects you will use first are:
 
 - `ClawAgent`
 - `ClawBridge`
 - `ClawSkill`
 - `ClawMemory`
-- `ToolDefinition`
 
-## What clawbridge is not
+## Fastest path
 
-`clawbridge` is not only an Agno app shell, and it does not claim feature-perfect parity across runtimes.
+If you want the fastest path:
 
-There are two layers in the project:
+- read the quickstart
+- build one small agent
+- load one skill
+- store one memory
 
-- **Portable core**: agent definition, skills, prompt assembly, memory object, and runtime wrapper
-- **Backend-specific helpers**: direct compile helpers and optional app-mode DX
+Do not start with architecture or backend details unless you already need them.
 
-## Current emphasis
+## What comes later
 
-The primary workflow is the portable core. Agno app mode still exists, but it is a convenience layer for Agno deployments rather than the product's main identity.
+There are more advanced parts of the project, including backend-specific helpers and filesystem-driven app mode, but they are intentionally not the starting point of the docs.

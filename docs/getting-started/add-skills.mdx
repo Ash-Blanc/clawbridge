@@ -1,0 +1,42 @@
+---
+title: Add Skills
+description: "Teach your agent new capabilities"
+---
+
+# Add Skills
+
+Skills are the easiest way to grow an agent without turning the first example into a mess.
+
+## Goal
+
+Teach your agent one new capability.
+
+## Basic layout
+
+```text
+skills/web_search/
+  SKILL.md
+  tools.py
+```
+
+## Example tool
+
+```python
+def search_web(query: str) -> str:
+    """Search the web."""
+    return f"Results for: {query}"
+```
+
+## Load the skill
+
+```python
+from pathlib import Path
+
+from clawbridge import ClawAgent, ClawBridge, ClawSkill
+
+skill = ClawSkill.from_skill_md(Path("./skills/web_search"))
+agent = ClawAgent(name="Molty", skills=[skill])
+bridge = ClawBridge(agent, backend="agno")
+```
+
+Start with one skill. Keep it obvious. Avoid building a giant skills tree before your first agent works.

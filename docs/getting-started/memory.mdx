@@ -1,0 +1,27 @@
+---
+title: Add Memory
+description: "Store simple facts and preferences"
+---
+
+# Add Memory
+
+Once your first agent runs, the next useful step is memory.
+
+## Goal
+
+Store one fact or preference and read it back.
+
+```python
+bridge.memory.remember("user_name", "Alice", category="preference")
+bridge.memory.remember("timezone", "UTC", category="preference")
+
+print(bridge.memory.recall("user_name"))
+```
+
+Use memory for:
+
+- preferences
+- known facts
+- lightweight conversation context
+
+Do not overcomplicate memory at the start. Begin with a few clear keys and categories.

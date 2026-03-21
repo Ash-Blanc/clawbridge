@@ -1,9 +1,17 @@
 ---
 title: Quickstart
-description: "Start with the portable core, then choose a backend"
+description: "Get a working agent running in a few minutes"
 ---
 
 # Quickstart
+
+## What you will build
+
+By the end of this page, you will have:
+
+- one running agent
+- one model connection
+- one place to add memory and skills next
 
 ### 1. Install
 
@@ -11,7 +19,13 @@ description: "Start with the portable core, then choose a backend"
 uv sync --extra all
 ```
 
-### 2. Define a portable agent
+### 2. Set your API key
+
+```bash
+export ANTHROPIC_API_KEY="sk-..."
+```
+
+### 3. Create your first agent
 
 ```python
 from clawbridge import ClawAgent, ClawBridge, ModelConfig
@@ -31,27 +45,23 @@ bridge = ClawBridge(agent, backend="agno")
 print(bridge.chat("What can you do?"))
 ```
 
-### 3. Add memory or skills as needed
+### 4. Teach it something
 
 ```python
 bridge.memory.remember("user_name", "Alice", category="preference")
-```
-
-### 4. Switch runtime when needed
-
-```python
-bridge.switch_backend("agentica")
 print(bridge.memory.recall("user_name"))
 ```
 
-## Optional: Agno app mode
+## What you just built
 
-If you want the filesystem-driven Agno workflow, scaffold it separately:
+- a `ClawAgent`
+- a `ClawBridge`
+- a minimal memory-enabled chat loop
 
-```bash
-clawbridge init my-agent
-cd my-agent
-clawbridge dev
-```
+## Next steps
 
-That mode is Agno-only and exists on top of the portable core.
+- add a skill directory
+- try the CLI
+- move on to guides and examples
+
+Backend-specific and architecture details come later in the docs.

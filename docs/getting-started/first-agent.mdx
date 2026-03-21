@@ -1,0 +1,45 @@
+---
+title: Your First Agent
+description: "Build a minimal clawbridge agent"
+---
+
+# Your First Agent
+
+Start with the smallest working version:
+
+## Goal
+
+Build one agent that can answer a prompt successfully.
+
+```python
+from clawbridge import ClawAgent, ClawBridge, ModelConfig
+
+agent = ClawAgent(
+    name="Molty",
+    description="A helpful assistant",
+    personality="Helpful and concise.",
+    model=ModelConfig(
+        provider="anthropic",
+        model_id="claude-sonnet-4-20250514",
+        api_key_env="ANTHROPIC_API_KEY",
+    ),
+)
+
+bridge = ClawBridge(agent, backend="agno")
+print(bridge.chat("Say hello."))
+```
+
+## What each part does
+
+- `ClawAgent` defines the assistant
+- `ModelConfig` tells it which model to use
+- `ClawBridge` runs it
+
+## After this works
+
+Next, add:
+
+- one skill
+- one memory value
+
+Keep your first agent small. Add skills and memory only after this works.

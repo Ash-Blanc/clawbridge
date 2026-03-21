@@ -19,42 +19,24 @@
   "navigation": {
     "groups": [
       {
-        "group": "Get Started",
+        "group": "Start Here",
         "pages": [
           "docs/introduction",
-          "docs/quickstart"
+          "docs/quickstart",
+          "docs/getting-started/first-agent",
+          "docs/getting-started/add-skills",
+          "docs/getting-started/memory"
         ]
       },
       {
-        "group": "Concepts",
+        "group": "Basics",
         "pages": [
           "docs/concepts/agent-definition",
           "docs/concepts/skills",
-          "docs/concepts/memory"
-        ]
-      },
-      {
-        "group": "Backends",
-        "pages": [
-          "docs/backends/agno",
-          "docs/backends/agentica"
-        ]
-      },
-      {
-        "group": "Architecture",
-        "pages": [
-          "docs/architecture/folder-structure",
-          "docs/architecture/routing"
-        ]
-      },
-      {
-        "group": "Guides",
-        "pages": [
+          "docs/concepts/memory",
           "docs/guides/building-openclaws",
           "docs/guides/building-skills",
-          "docs/guides/memory-storage",
-          "docs/guides/gateways",
-          "docs/guides/app-mode"
+          "docs/guides/memory-storage"
         ]
       },
       {
@@ -64,6 +46,17 @@
           "docs/examples/devops-sre",
           "docs/examples/crypto-analyst",
           "docs/examples/researcher"
+        ]
+      },
+      {
+        "group": "Advanced",
+        "pages": [
+          "docs/backends/agno",
+          "docs/backends/agentica",
+          "docs/guides/gateways",
+          "docs/guides/app-mode",
+          "docs/architecture/folder-structure",
+          "docs/architecture/routing"
         ]
       }
     ]
