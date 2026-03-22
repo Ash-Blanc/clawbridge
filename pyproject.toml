@@ -1,7 +1,7 @@
 [project]
 name = "clawbridge"
 version = "0.1.0"
-description = "Build OpenClaw-style agents inside frameworks like Agno and Agentica"
+description = "Build and deploy OpenClaw-style agents in frameworks like Agno and Agentica"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 dependencies = [

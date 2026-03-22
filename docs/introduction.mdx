@@ -1,18 +1,18 @@
 ---
 title: Introduction
-description: "OpenClaw-style workspaces, skills, and builders for Agno and Agentica"
+description: "Build and deploy OpenClaw-style agents in Agno and Agentica"
 ---
 
 # clawbridge
 
-`clawbridge` helps you build OpenClaw-style agents inside frameworks you already want to use.
+`clawbridge` helps you build and deploy OpenClaw-style agents inside frameworks you already want to use.
 
 If you are new to the project, think of it like this:
 
 1. Scaffold an OpenClaw workspace
 2. Define an agent in `agent.yaml` or `agents.yaml`
 3. Add skills and workspace files
-4. Build for Agno or Agentica
+4. Build or deploy for Agno or Agentica
 5. Add framework-specific extras only when needed
 
 ## Start here
@@ -31,6 +31,7 @@ The main objects you will use first are:
 - `ClawMemory`
 - `build_agno_agent()`
 - `build_agentica_agent()`
+- `clawbridge serve` for native Agno serving
 
 ## Fastest path
 
@@ -41,8 +42,8 @@ If you want the fastest path:
 - load one skill
 - store one memory value
 
-Do not start with architecture or framework-specific deployment details unless you already need them.
+Do not start with architecture details unless you already need them. Start with the workspace and agent config, then choose the runtime and deployment path you need.
 
 ## What comes later
 
-There are more advanced parts of the project, including optional Agno deployment helpers, but they are intentionally not the starting point of the docs.
+There are more advanced parts of the project, including native serving and optional Agno deployment helpers, but they are intentionally not the starting point of the docs.

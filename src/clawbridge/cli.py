@@ -17,7 +17,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="clawbridge",
         description=(
-            "Build OpenClaw-style agents inside Agno or Agentica. "
+            "Build and deploy OpenClaw-style agents inside Agno or Agentica. "
             "Start with `clawbridge scaffold` for a workspace-first flow."
         ),
         epilog=(

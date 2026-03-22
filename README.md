@@ -5,25 +5,27 @@
 <h1 align="center">clawbridge</h1>
 
 <p align="center">
-  <strong>OpenClaw-style skills, prompts, and helpers for Agno and Agentica.</strong>
+  <strong>Build and deploy OpenClaw-style agents in frameworks like Agno and Agentica.</strong>
 </p>
 
 ## What Is clawbridge?
 
 `clawbridge` is not a meta-framework and it does not try to unify agent runtimes.
 
-It helps you build OpenClaw-style agents inside frameworks you already want to use:
+It helps you build and deploy OpenClaw-style agents inside frameworks you already want to use:
 
 - Agno
 - Agentica
 - more adapters over time
 
-The shared value is OpenClaw conventions:
+The shared value is OpenClaw conventions plus framework-native execution:
 
 - `ClawAgent` for OpenClaw-style agent config
+- OpenClaw workspace files like `AGENTS.md`, `BOOTSTRAP.md`, and `MEMORY.md`
 - `ClawSkill` for `SKILL.md` packages and callable tools
 - `ClawMemory` for lightweight memory helpers
 - framework-native builders like `build_agno_agent()` and `build_agentica_agent()`
+- deployment entrypoints like `clawbridge serve` where the target framework supports them
 
 ## Install
 
@@ -47,6 +49,8 @@ If you want a starter multi-agent layout:
 clawbridge scaffold ./my-workspace --multi-agent
 ```
 
+Today, Agno has the most complete deployment path in the repo. Agentica support is strong for agent construction and runtime config, but not at Agno parity for deployment.
+
 ## Build A Native Agno Agent
 
 ```python
@@ -68,6 +72,22 @@ response = native_agent.run("Say hello and tell me what you can do.")
 print(getattr(response, "content", response))
 ```
 
+## Deploy With Agno
+
+If you want a native serving path, Agno is the first-class deployment target today:
+
+```bash
+clawbridge serve --port 8000
+```
+
+For filesystem-driven Agno deployment, the optional helper flow is still available:
+
+```bash
+clawbridge init my-agno-helper
+cd my-agno-helper
+clawbridge dev
+```
+
 ## Build An Agentica Agent
 
 ```python
@@ -80,6 +100,8 @@ agent = ClawAgent(
 
 agentica_config = build_agentica_agent(agent)
 ```
+
+`build_agentica_agent()` gives you an Agentica-ready config and runtime prompt/scope wiring. Deployment ergonomics there are still thinner than Agno.
 
 ## Add An OpenClaw Skill
 

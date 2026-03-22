@@ -1,5 +1,5 @@
 """
-clawbridge — OpenClaw-style skills, prompts, and builders for agent frameworks.
+clawbridge — build and deploy OpenClaw-style agents in framework-native runtimes.
 
 Usage:
     from clawbridge import ClawAgent, build_agno_agent

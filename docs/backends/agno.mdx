@@ -1,21 +1,51 @@
 ---
 title: Agno Backend
-description: "OpenClaw-style builders plus Agno-native helpers"
+description: "Build and deploy OpenClaw-style agents with Agno"
 ---
 
 # Agno Backend
 
 Agno is the most complete framework integration in the repository today.
 
-## What works
+## Build path
 
-- `build_agno_agent(...)`
+Use `build_agno_agent(...)` when you want a native Agno `Agent` from a `ClawAgent` or workspace-backed config.
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+```
+
+This path currently supports:
+
+- OpenClaw prompt assembly from workspace files
 - direct callable tools
 - strict failure for schema-only skills without real callables
 - native storage mapping for `storage`
 - knowledge integration
 - channel policy and Agno interface wiring
-- serving through Agno `AgentOS`
+
+## Deploy path
+
+Use Agno when you want the strongest deployment story in the repo today.
+
+For native serving:
+
+```bash
+clawbridge serve --port 8000
+```
+
+For the optional filesystem-driven Agno deployment helper:
+
+```bash
+clawbridge init my-agno-helper
+cd my-agno-helper
+clawbridge dev
+```
+
+Both paths ultimately deploy through Agno `AgentOS`.
 
 ## What is Agno-specific
 
@@ -25,5 +55,3 @@ These features should be treated as Agno extensions rather than generic guarante
 - vector knowledge ingestion from `knowledge`
 - Slack and WhatsApp interfaces from `channels`
 - optional filesystem deployment helper via `clawbridge.app.ClawApp`
-
-If you need native Agno objects, `build_agno_agent(...)` is the direct path.
