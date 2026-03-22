@@ -52,14 +52,11 @@ class AgenticaBackend(ClawBackend):
         or 'openai/gpt-4o'.
         """
         cfg = self.agent.model
-        provider_prefix = {
-            LLMProvider.OPENAI: "openai",
-            LLMProvider.ANTHROPIC: "anthropic",
-            LLMProvider.GROQ: "groq",
-            LLMProvider.DEEPSEEK: "deepseek",
-        }
-        prefix = provider_prefix.get(cfg.provider, cfg.provider.value)
-        return f"{prefix}/{cfg.model_id}"
+        if "/" in cfg.model:
+            return cfg.model
+        if cfg.provider_name == LLMProvider.LITELLM:
+            return cfg.model
+        return f"{cfg.provider_name}/{cfg.model}"
 
     def _build_scope(self) -> dict[str, Any]:
         """

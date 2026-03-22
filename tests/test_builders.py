@@ -3,11 +3,12 @@ from __future__ import annotations
 from pathlib import Path
 
 from clawbridge.builders import build_agentica_agent, load_agent_config
+from clawbridge.backends.agentica import AgenticaBackend
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.memory import ClawMemory
 from clawbridge.core.prompt import OpenClawPromptContext, OpenClawPromptMode
 from clawbridge.core.session import OpenClawSessionContext, OpenClawSessionScope
-from clawbridge.core.types import MemoryConfig
+from clawbridge.core.types import LLMProvider, MemoryConfig, ModelConfig
 from clawbridge.core.types import ToolDefinition
 
 
@@ -114,6 +115,31 @@ def test_build_system_prompt_shared_session_skips_curated_memory(tmp_path: Path)
     assert "Session id: group-123" in prompt
 
 
+def test_build_system_prompt_includes_agent_runtime_metadata(tmp_path: Path) -> None:
+    (tmp_path / "AGENTS.md").write_text("Agent rules", encoding="utf-8")
+    state_dir = tmp_path / ".clawbridge" / "writer"
+    state_dir.mkdir(parents=True)
+
+    agent = load_agent_config(
+        ClawAgent(
+            name="Writer",
+            agent_id="writer",
+            workspace_path=tmp_path,
+            state_dir=state_dir,
+            auth_profile="writer",
+        )
+    )
+
+    prompt = agent.build_system_prompt(
+        prompt_mode=OpenClawPromptMode.FULL,
+        prompt_context=OpenClawPromptContext(timezone_identifier="Etc/UTC"),
+    )
+
+    assert "Agent id: writer" in prompt
+    assert f"Agent state dir: {state_dir}" in prompt
+    assert "Auth profile: writer" in prompt
+
+
 def test_build_agentica_agent_returns_agentica_ready_config() -> None:
     memory = ClawMemory(MemoryConfig(enabled=False))
     agent = ClawAgent(name="Assistant")
@@ -123,6 +149,45 @@ def test_build_agentica_agent_returns_agentica_ready_config() -> None:
     assert compiled.model == "anthropic/claude-sonnet-4-20250514"
     assert "memory" in compiled.scope
     assert compiled.system_prompt
+
+
+def test_agentica_model_string_supports_mistral_provider() -> None:
+    agent = ClawAgent(
+        name="MistralAgent",
+        model=ModelConfig(
+            provider=LLMProvider.MISTRAL,
+            model="mistral-large-latest",
+        ),
+    )
+
+    backend = AgenticaBackend(agent)
+
+    assert backend._resolve_model_string() == "mistral/mistral-large-latest"
+
+
+def test_agentica_model_string_supports_arbitrary_provider_strings() -> None:
+    agent = ClawAgent(
+        name="GeminiAgent",
+        model=ModelConfig(provider="vertex_ai", model="gemini-2.5-pro"),
+    )
+
+    backend = AgenticaBackend(agent)
+
+    assert backend._resolve_model_string() == "vertex_ai/gemini-2.5-pro"
+
+
+def test_agentica_model_string_keeps_fully_qualified_models() -> None:
+    agent = ClawAgent(
+        name="QualifiedAgent",
+        model=ModelConfig(
+            provider=LLMProvider.LITELLM,
+            model="openrouter/openai/gpt-4.1-mini",
+        ),
+    )
+
+    backend = AgenticaBackend(agent)
+
+    assert backend._resolve_model_string() == "openrouter/openai/gpt-4.1-mini"
 
 
 def test_load_agent_config_loads_adjacent_skills(tmp_path: Path) -> None:

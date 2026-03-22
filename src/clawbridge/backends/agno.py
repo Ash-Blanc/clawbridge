@@ -52,23 +52,12 @@ class AgnoBackend(ClawBackend):
         self._ensure_imports()
         cfg = self.agent.model
 
-        model_map: dict[LLMProvider, tuple[str, str]] = {
-            LLMProvider.OPENAI: ("agno.models.openai", "OpenAIChat"),
-            LLMProvider.ANTHROPIC: ("agno.models.anthropic", "Claude"),
-            LLMProvider.GROQ: ("agno.models.groq", "Groq"),
-            LLMProvider.DEEPSEEK: ("agno.models.deepseek", "DeepSeek"),
-            LLMProvider.LOCAL: ("agno.models.openai", "OpenAILike"),
-        }
-
-        if cfg.provider not in model_map:
-            raise ValueError(f"Unsupported Agno model provider: {cfg.provider}")
-
-        module_path, class_name = model_map[cfg.provider]
+        module_path, class_name, model_id = self._resolve_model_target()
         import importlib
         mod = importlib.import_module(module_path)
         model_cls = getattr(mod, class_name)
 
-        kwargs: dict[str, Any] = {"id": cfg.model_id}
+        kwargs: dict[str, Any] = {"id": model_id}
         model_fields = getattr(model_cls, "__dataclass_fields__", {})
 
         if "temperature" in model_fields:
@@ -79,10 +68,32 @@ class AgnoBackend(ClawBackend):
             kwargs["max_output_tokens"] = cfg.max_tokens
         if cfg.api_key:
             kwargs["api_key"] = cfg.api_key
-        if cfg.base_url:
+        if cfg.base_url and class_name == "LiteLLM":
+            kwargs["api_base"] = cfg.base_url
+        elif cfg.base_url:
             kwargs["base_url"] = cfg.base_url
 
         return model_cls(**kwargs)
+
+    def _resolve_model_target(self) -> tuple[str, str, str]:
+        """Resolve the Agno model class and effective model id."""
+        cfg = self.agent.model
+        provider = cfg.provider_name
+
+        native_models: dict[str, tuple[str, str]] = {
+            LLMProvider.OPENAI: ("agno.models.openai", "OpenAIChat"),
+            LLMProvider.ANTHROPIC: ("agno.models.anthropic", "Claude"),
+            LLMProvider.GROQ: ("agno.models.groq", "Groq"),
+            LLMProvider.DEEPSEEK: ("agno.models.deepseek", "DeepSeek"),
+            LLMProvider.MISTRAL: ("agno.models.mistral", "MistralChat"),
+            LLMProvider.LOCAL: ("agno.models.openai", "OpenAILike"),
+        }
+
+        if provider in native_models:
+            module_path, class_name = native_models[provider]
+            return module_path, class_name, cfg.model
+
+        return "agno.models.litellm", "LiteLLM", cfg.litellm_model_id
 
     def _build_tools(self) -> list[Any]:
         """
@@ -286,6 +297,9 @@ class AgnoBackend(ClawBackend):
     def _build_interfaces(self) -> list[Any]:
         """Convert ChannelConfigs to Agno Interfaces."""
         interfaces: list[Any] = []
+        for channel in self.agent.channels:
+            self._validate_channel_config(channel)
+
         native_agent = self.native
         for channel in self.agent.channels:
             try:
@@ -321,6 +335,29 @@ class AgnoBackend(ClawBackend):
                     f"Agno interface support for '{channel.type}' requires optional dependencies."
                 ) from exc
         return interfaces
+
+    @staticmethod
+    def _validate_channel_config(channel: Any) -> None:
+        """Fail fast on incomplete Agno channel deployment config."""
+        if channel.token is None:
+            raise ValueError(
+                f"Channel '{channel.type}' requires token_env='{channel.token_env}' to be set."
+            )
+
+        if channel.type == "slack" and not channel.verification_token_env:
+            raise ValueError(
+                "Slack channel config requires verification_token_env for signing secret validation."
+            )
+
+        if channel.type == "whatsapp":
+            if not channel.verification_token_env:
+                raise ValueError(
+                    "WhatsApp channel config requires verification_token_env for verify_token."
+                )
+            if not channel.bot_id_env:
+                raise ValueError(
+                    "WhatsApp channel config requires bot_id_env for phone_number_id."
+                )
 
     async def serve(self, host: str = "0.0.0.0", port: int = 8000) -> None:
         """

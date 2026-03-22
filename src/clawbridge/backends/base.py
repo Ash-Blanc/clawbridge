@@ -8,7 +8,9 @@ from typing import Any
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.channel import (
     ChannelMessageContext,
+    ChannelSurface,
     ChannelPolicyDecision,
+    build_heartbeat_message,
     evaluate_channel_policy,
 )
 from clawbridge.core.memory import ClawMemory
@@ -77,6 +79,59 @@ class ClawBackend(ABC):
         """Synchronous wrapper for channel-policy execution."""
         import asyncio
         return asyncio.run(self.run_channel_message(message, context=context))
+
+    async def run_direct_message(
+        self,
+        message: str,
+        *,
+        session_id: str,
+        mentioned: bool = False,
+    ) -> str:
+        """Run a direct-message event through channel policy handling."""
+        return await self.run_channel_message(
+            message,
+            context=ChannelMessageContext(
+                surface=ChannelSurface.DIRECT,
+                session_id=session_id,
+                mentioned=mentioned,
+            ),
+        )
+
+    async def run_group_message(
+        self,
+        message: str,
+        *,
+        session_id: str,
+        group_id: str,
+        mentioned: bool,
+    ) -> str:
+        """Run a group-message event through channel policy handling."""
+        return await self.run_channel_message(
+            message,
+            context=ChannelMessageContext(
+                surface=ChannelSurface.GROUP,
+                session_id=session_id,
+                group_id=group_id,
+                mentioned=mentioned,
+            ),
+        )
+
+    async def run_heartbeat(
+        self,
+        *,
+        session_id: str | None = None,
+        group_id: str | None = None,
+    ) -> str:
+        """Run a heartbeat event using the agent's configured heartbeat prompt."""
+        heartbeat_message = build_heartbeat_message(
+            self.agent.channel_policy,
+            session_id=session_id,
+            group_id=group_id,
+        )
+        return await self.run_channel_message(
+            heartbeat_message.prompt,
+            context=heartbeat_message.context,
+        )
 
     def evaluate_channel_policy(
         self,

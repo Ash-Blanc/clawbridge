@@ -113,6 +113,39 @@ def test_build_heartbeat_message_uses_policy_defaults() -> None:
     assert heartbeat_message.context.session_id == "hb-default"
 
 
+def test_backend_run_direct_and_group_helpers_use_policy() -> None:
+    backend = _StubBackend(
+        ClawAgent(
+            channel_policy=ChannelSessionPolicy(
+                groups=GroupChannelPolicy(
+                    allowlist=["eng"],
+                    require_mention=True,
+                )
+            )
+        )
+    )
+
+    direct_result = asyncio.run(
+        backend.run_direct_message(
+            "hello",
+            session_id="dm-user-1",
+        )
+    )
+    group_result = asyncio.run(
+        backend.run_group_message(
+            "status",
+            session_id="group-eng",
+            group_id="eng",
+            mentioned=True,
+        )
+    )
+
+    assert "scope=direct_message" in direct_result
+    assert "trigger=user_message" in direct_result
+    assert "scope=group" in group_result
+    assert "trigger=mention" in group_result
+
+
 def test_channel_policy_heartbeat_messages_are_distinguishable(
     tmp_path: Path,
 ) -> None:
@@ -155,3 +188,30 @@ def test_channel_policy_heartbeat_messages_are_distinguishable(
     assert "## HEARTBEAT.md [heartbeat only]" in prompt
     assert "Heartbeat instructions" in prompt
     assert "## MEMORY.md" not in prompt
+
+
+def test_backend_run_heartbeat_uses_configured_prompt(tmp_path: Path) -> None:
+    workspace_dir = tmp_path / "workspace"
+    workspace_dir.mkdir()
+    (workspace_dir / "AGENTS.md").write_text("Agent rules", encoding="utf-8")
+
+    backend = _StubBackend(
+        load_agent_config(
+            ClawAgent(
+                workspace_path=workspace_dir,
+                channel_policy=ChannelSessionPolicy(
+                    heartbeat=HeartbeatPolicy(
+                        enabled=True,
+                        prompt="Heartbeat: review current task list.",
+                        default_session_id="hb-default",
+                    )
+                ),
+            )
+        )
+    )
+
+    result = asyncio.run(backend.run_heartbeat())
+
+    assert result.startswith("Heartbeat: review current task list.")
+    assert "scope=shared" in result
+    assert "trigger=heartbeat" in result

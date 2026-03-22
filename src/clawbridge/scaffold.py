@@ -153,11 +153,13 @@ workspace_path: .
 personality: Pragmatic, concise, and reliable.
 model:
   provider: anthropic
-  model_id: claude-sonnet-4-20250514
+  model: claude-sonnet-4-20250514
 """,
     )
 
     if include_multi_agent:
+        (workspace_dir / ".clawbridge" / "assistant").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / ".clawbridge" / "reviewer").mkdir(parents=True, exist_ok=True)
         _write_file(
             workspace_dir / "agents.yaml",
             """default_agent_id: assistant
@@ -168,10 +170,14 @@ agents:
     name: Assistant
     description: Workspace primary agent
     workspace_path: .
+    state_dir: ./.clawbridge/assistant
+    auth_profile: assistant
   reviewer:
     name: Reviewer
     description: Secondary reviewer agent
     workspace_path: .
+    state_dir: ./.clawbridge/reviewer
+    auth_profile: reviewer
 allow_shared_workspaces: true
 """,
         )

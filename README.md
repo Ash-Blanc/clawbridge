@@ -27,6 +27,8 @@ The shared value is OpenClaw conventions plus framework-native execution:
 - framework-native builders like `build_agno_agent()` and `build_agentica_agent()`
 - deployment entrypoints like `clawbridge serve` where the target framework supports them
 
+Model configuration is no longer limited to a fixed enum. `ModelConfig.provider` accepts known providers like `anthropic`, `openai`, and `mistral`, plus arbitrary LiteLLM-compatible provider strings when the target framework can route them.
+
 ## Install
 
 ```bash
@@ -62,14 +64,24 @@ agent = ClawAgent(
     personality="Helpful, clear, and concise.",
     model=ModelConfig(
         provider="anthropic",
-        model_id="claude-sonnet-4-20250514",
-        api_key_env="ANTHROPIC_API_KEY",
+        model="claude-sonnet-4-20250514",
+        api_key="ANTHROPIC_API_KEY",
     ),
 )
 
 native_agent = build_agno_agent(agent)
 response = native_agent.run("Say hello and tell me what you can do.")
 print(getattr(response, "content", response))
+```
+
+For Mistral, use:
+
+```python
+ModelConfig(
+    provider="mistral",
+    model="mistral-large-latest",
+    api_key="MISTRAL_API_KEY",
+)
 ```
 
 ## Deploy With Agno

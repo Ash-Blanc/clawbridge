@@ -51,5 +51,8 @@ def test_create_openclaw_workspace_can_emit_multi_agent_config(
 
     reviewer = load_agent_config(agents_file, agent_id="reviewer")
     assert reviewer.name == "Reviewer"
+    assert reviewer.agent_id == "reviewer"
     assert reviewer.workspace_path == workspace_dir
+    assert reviewer.state_dir == workspace_dir / ".clawbridge" / "reviewer"
+    assert reviewer.auth_profile == "reviewer"
     assert reviewer.workspace is not None

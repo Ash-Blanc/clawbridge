@@ -5,7 +5,7 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class LLMProvider(StrEnum):
@@ -13,25 +13,40 @@ class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"
     GROQ = "groq"
     DEEPSEEK = "deepseek"
+    MISTRAL = "mistral"
+    LITELLM = "litellm"
     LOCAL = "local"
 
 
 class ModelConfig(BaseModel):
     """LLM model configuration for supported framework builders."""
 
-    provider: LLMProvider = LLMProvider.ANTHROPIC
-    model_id: str = "claude-sonnet-4-20250514"
+    provider: str = LLMProvider.ANTHROPIC
+    model: str = "claude-sonnet-4-20250514"
     temperature: float = 0.7
     max_tokens: int = 4096
-    api_key_env: str | None = None  # e.g. "ANTHROPIC_API_KEY"
+    api_key: str | None = None
     base_url: str | None = None     # for local / custom endpoints
 
+    @field_validator("provider", mode="before")
+    @classmethod
+    def _normalize_provider(cls, value: str | LLMProvider) -> str:
+        if isinstance(value, LLMProvider):
+            return value.value
+        normalized = str(value).strip().lower()
+        if not normalized:
+            raise ValueError("provider must not be empty")
+        return normalized
+
     @property
-    def api_key(self) -> str | None:
-        import os
-        if self.api_key_env:
-            return os.environ.get(self.api_key_env)
-        return None
+    def provider_name(self) -> str:
+        return self.provider
+
+    @property
+    def litellm_model_id(self) -> str:
+        if "/" in self.model or self.provider_name == LLMProvider.LITELLM:
+            return self.model
+        return f"{self.provider_name}/{self.model}"
 
 
 class ToolParameter(BaseModel):

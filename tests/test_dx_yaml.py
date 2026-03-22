@@ -16,7 +16,7 @@ description: A test agent from yaml
 personality: Be very concise
 model:
   provider: openai
-  model_id: gpt-4o
+  model: gpt-4o
 storage:
   enabled: true
   type: in_memory

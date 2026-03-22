@@ -17,6 +17,8 @@ agno = [
     "fastapi",
     "uvicorn",
     "anthropic",
+    "litellm>=1.76",
+    "mistralai",
     "openai",
     "groq",
     "sqlalchemy>=2.0",

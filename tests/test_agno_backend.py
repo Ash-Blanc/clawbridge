@@ -30,7 +30,7 @@ def test_agno_backend_compile():
 
     agent = ClawAgent(
         name="TestAgent",
-        model=ModelConfig(provider=LLMProvider.OPENAI, model_id="gpt-4o"),
+        model=ModelConfig(provider=LLMProvider.OPENAI, model="gpt-4o"),
         tools=[ToolDefinition(name="my_tool", description="My tool.", callable=my_tool)],
         storage=StorageConfig(enabled=True, type=StorageType.IN_MEMORY)
     )
@@ -75,6 +75,57 @@ def test_agno_backend_rejects_tools_without_callables() -> None:
 
     with pytest.raises(ValueError, match="Missing implementations for: search_web"):
         backend._build_tools()
+
+
+def test_agno_backend_uses_native_mistral_target() -> None:
+    agent = ClawAgent(
+        name="MistralAgent",
+        model=ModelConfig(
+            provider=LLMProvider.MISTRAL,
+            model="mistral-large-latest",
+        ),
+    )
+
+    backend = AgnoBackend(agent)
+
+    assert backend._resolve_model_target() == (
+        "agno.models.mistral",
+        "MistralChat",
+        "mistral-large-latest",
+    )
+
+
+def test_agno_backend_falls_back_to_litellm_for_arbitrary_provider() -> None:
+    agent = ClawAgent(
+        name="GeminiAgent",
+        model=ModelConfig(provider="vertex_ai", model="gemini-2.5-pro"),
+    )
+
+    backend = AgnoBackend(agent)
+
+    assert backend._resolve_model_target() == (
+        "agno.models.litellm",
+        "LiteLLM",
+        "vertex_ai/gemini-2.5-pro",
+    )
+
+
+def test_agno_backend_keeps_fully_qualified_litellm_models() -> None:
+    agent = ClawAgent(
+        name="OpenRouterAgent",
+        model=ModelConfig(
+            provider=LLMProvider.LITELLM,
+            model="openrouter/openai/gpt-4.1-mini",
+        ),
+    )
+
+    backend = AgnoBackend(agent)
+
+    assert backend._resolve_model_target() == (
+        "agno.models.litellm",
+        "LiteLLM",
+        "openrouter/openai/gpt-4.1-mini",
+    )
 
 
 def test_agno_backend_builds_interfaces_with_native_agent(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -132,3 +183,42 @@ def test_agno_backend_builds_interfaces_with_native_agent(monkeypatch: pytest.Mo
     assert captured["whatsapp"]["access_token"] == "wa-token"
     assert captured["whatsapp"]["verify_token"] == "wa-verify"
     assert captured["whatsapp"]["phone_number_id"] == "wa-phone"
+
+
+def test_agno_backend_rejects_missing_channel_env() -> None:
+    agent = ClawAgent(
+        name="BrokenSlack",
+        channels=[
+            ChannelConfig(
+                type=ChannelType.SLACK,
+                token_env="MISSING_SLACK_TOKEN",
+                verification_token_env="SLACK_SIGNING_SECRET",
+            )
+        ],
+    )
+
+    backend = AgnoBackend(agent)
+
+    with pytest.raises(ValueError, match="requires token_env='MISSING_SLACK_TOKEN'"):
+        backend._build_interfaces()
+
+
+def test_agno_backend_rejects_incomplete_whatsapp_channel(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("WHATSAPP_ACCESS_TOKEN", "wa-token")
+
+    agent = ClawAgent(
+        name="BrokenWhatsapp",
+        channels=[
+            ChannelConfig(
+                type=ChannelType.WHATSAPP,
+                token_env="WHATSAPP_ACCESS_TOKEN",
+            )
+        ],
+    )
+
+    backend = AgnoBackend(agent)
+
+    with pytest.raises(ValueError, match="requires verification_token_env"):
+        backend._build_interfaces()

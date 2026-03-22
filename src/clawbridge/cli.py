@@ -149,7 +149,7 @@ def _cmd_run(args: argparse.Namespace) -> None:
 
     agent = ClawAgent(
         name=args.name,
-        model=ModelConfig(provider=args.provider, model_id=args.model),  # type: ignore[arg-type]
+        model=ModelConfig(provider=args.provider, model=args.model),
         skill_paths=skill_paths,
         personality=args.personality,
     )
@@ -264,7 +264,7 @@ description: A personal OpenClaw agent powered by Agno.
 personality: I am a helpful, concise, and capable AI assistant.
 model:
   provider: openai
-  model_id: gpt-4o
+  model: gpt-4o
 storage:
   enabled: true
   type: sqlite

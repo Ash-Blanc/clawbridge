@@ -14,7 +14,8 @@ It groups three kinds of configuration:
 These fields describe the agent regardless of which builder you use:
 
 - identity: `name`, `description`, `personality`, `role`
-- model config: `provider`, `model_id`, API key indirection
+- model config: `provider`, `model`, API key wiring
+  `provider` accepts first-class values like `anthropic`, `openai`, and `mistral`, plus arbitrary LiteLLM-compatible provider strings
 - tools and skills: direct `ToolDefinition` values plus `ClawSkill`
 - prompt composition: `system_prompt`, `additional_instructions`
 - memory helpers: `memory_config`

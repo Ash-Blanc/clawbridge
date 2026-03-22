@@ -24,6 +24,7 @@ class MultiAgentConfig(BaseModel):
     default_agent_id: str | None = None
     shared_skill_paths: list[Path] = Field(default_factory=list)
     allow_shared_workspaces: bool = False
+    allow_shared_state_dirs: bool = False
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -40,6 +41,7 @@ class MultiAgentConfig(BaseModel):
             for path in (data.get("shared_skill_paths") or [])
         ]
         allow_shared_workspaces = bool(data.get("allow_shared_workspaces", False))
+        allow_shared_state_dirs = bool(data.get("allow_shared_state_dirs", False))
         default_agent_id = data.get("default_agent_id")
 
         raw_agents = data.get("agents")
@@ -82,8 +84,10 @@ class MultiAgentConfig(BaseModel):
             default_agent_id=default_agent_id,
             shared_skill_paths=shared_skill_paths,
             allow_shared_workspaces=allow_shared_workspaces,
+            allow_shared_state_dirs=allow_shared_state_dirs,
         )
         config.validate_workspace_isolation()
+        config.validate_state_dir_isolation()
         return config
 
     def select_agent(self, agent_id: str | None = None) -> ClawAgent:
@@ -95,6 +99,7 @@ class MultiAgentConfig(BaseModel):
         for definition in self.agents:
             if definition.agent_id == selected_id:
                 selected_agent = definition.agent.model_copy(deep=True)
+                selected_agent.agent_id = definition.agent_id
                 selected_agent.skill_paths = [
                     *self.shared_skill_paths,
                     *selected_agent.skill_paths,
@@ -126,6 +131,26 @@ class MultiAgentConfig(BaseModel):
                 )
             seen[resolved_path] = definition.agent_id
 
+    def validate_state_dir_isolation(self) -> None:
+        """Detect accidental shared state dir usage across agents."""
+        if self.allow_shared_state_dirs:
+            return
+
+        seen: dict[Path, str] = {}
+        for definition in self.agents:
+            state_dir = definition.agent.state_dir
+            if state_dir is None:
+                continue
+            resolved_path = state_dir.expanduser().resolve()
+            previous_agent = seen.get(resolved_path)
+            if previous_agent is not None:
+                raise ValueError(
+                    "Multiple agents resolve to the same state dir "
+                    f"'{resolved_path}' ({previous_agent}, {definition.agent_id}). "
+                    "Set allow_shared_state_dirs=true to allow this explicitly."
+                )
+            seen[resolved_path] = definition.agent_id
+
 
 def looks_like_multi_agent_config(data: dict[str, Any]) -> bool:
     """Return True when a payload should be parsed as multi-agent config."""
@@ -139,6 +164,8 @@ def _build_agent(data: dict[str, Any], *, base_dir: Path | None) -> ClawAgent:
     payload = dict(data)
     if "workspace_path" in payload and payload["workspace_path"] is not None:
         payload["workspace_path"] = _resolve_path(payload["workspace_path"], base_dir)
+    if "state_dir" in payload and payload["state_dir"] is not None:
+        payload["state_dir"] = _resolve_path(payload["state_dir"], base_dir)
     if "skill_paths" in payload and payload["skill_paths"] is not None:
         payload["skill_paths"] = [
             _resolve_path(path, base_dir) for path in payload["skill_paths"]

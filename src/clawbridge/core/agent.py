@@ -46,8 +46,11 @@ class ClawAgent(BaseModel):
     skill_resolution: list[SkillLoadRecord] = Field(default_factory=list)
     tools: list[ToolDefinition] = Field(default_factory=list)
     skill_paths: list[Path] = Field(default_factory=list)
+    agent_id: str | None = None
     workspace_path: Path | None = None
     workspace: OpenClawWorkspace | None = None
+    state_dir: Path | None = None
+    auth_profile: str | None = None
 
     # ── Memory ──
     memory_config: MemoryConfig = Field(default_factory=MemoryConfig)

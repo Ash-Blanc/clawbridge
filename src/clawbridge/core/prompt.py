@@ -120,6 +120,8 @@ class OpenClawPromptBuilder:
 
     def _render_identity(self, agent: ClawAgent) -> str:
         lines = ["# Identity", f"- Name: {agent.name}"]
+        if agent.agent_id:
+            lines.append(f"- Agent id: {agent.agent_id}")
         if agent.description:
             lines.append(f"- Description: {agent.description}")
         if agent.personality:
@@ -186,6 +188,10 @@ class OpenClawPromptBuilder:
             lines.append("- No workspace path configured.")
         else:
             lines.append(f"- Active workspace: {workspace_path}")
+        if agent.state_dir is not None:
+            lines.append(f"- Agent state dir: {agent.state_dir}")
+        if agent.auth_profile is not None:
+            lines.append(f"- Auth profile: {agent.auth_profile}")
         lines.append(f"- Session scope: {context.session.scope}")
         lines.append(f"- Session trigger: {context.session.trigger}")
         if context.session.group_id is not None:
@@ -324,7 +330,9 @@ class OpenClawPromptBuilder:
         context: OpenClawPromptContext,
     ) -> str:
         lines = ["# Runtime"]
-        lines.append(f"- Model: {agent.model.provider}/{agent.model.model_id}")
+        lines.append(f"- Model: {agent.model.provider}/{agent.model.model}")
+        if agent.agent_id is not None:
+            lines.append(f"- Agent id: {agent.agent_id}")
         lines.append(f"- Session id: {context.session.session_id}")
         lines.append(f"- Trigger: {context.session.trigger}")
         if (
