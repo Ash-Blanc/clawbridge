@@ -38,7 +38,6 @@ class TeamConfig(BaseModel):
     members: list[ClawAgent] = Field(default_factory=list)
     max_iterations: int = 10
     share_member_interactions: bool = False
-    enable_agentic_context: bool = False
 
     # ── Storage ──
     storage: StorageConfig = Field(default_factory=StorageConfig)
