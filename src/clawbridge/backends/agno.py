@@ -258,12 +258,13 @@ class AgnoBackend(ClawBackend):
         self._ensure_imports()
         Agent = self._agno_mod["Agent"]
 
-        # Build prompt — only inject ClawMemory when NOT using Agno-native memory
-        use_native_memory = self.agent.agent_memory_mode != AgentMemoryMode.OFF
-        passed_memory = None if use_native_memory else self.memory
-        # Also skip ClawMemory when native storage provides history
-        if self.agent.storage.enabled:
-            passed_memory = None
+        # Build prompt — only skip ClawMemory when Agno-native memory is functional
+        # (native memory requires BOTH agent_memory_mode != OFF AND storage.enabled)
+        native_memory_functional = (
+            self.agent.agent_memory_mode != AgentMemoryMode.OFF
+            and self.agent.storage.enabled
+        )
+        passed_memory = None if native_memory_functional else self.memory
         system_prompt = self.build_system_prompt(
             passed_memory,
             session_context=session_context,
@@ -315,8 +316,13 @@ class AgnoBackend(ClawBackend):
         session_context = self.get_session_context(session_id)
         agent = self._compile_for_session(session_context)
 
-        use_native_memory = self.agent.agent_memory_mode != AgentMemoryMode.OFF
-        track_manually = not self.agent.storage.enabled and not use_native_memory
+        # Native memory is only functional when BOTH mode != OFF AND storage is enabled
+        native_memory_functional = (
+            self.agent.agent_memory_mode != AgentMemoryMode.OFF
+            and self.agent.storage.enabled
+        )
+        # Track manually when native memory isn't functional (no storage OR mode is OFF)
+        track_manually = not native_memory_functional
 
         if track_manually:
             self.memory.add_message(session_id, "user", message)
