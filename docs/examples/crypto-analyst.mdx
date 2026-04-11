@@ -1,27 +1,101 @@
 ---
 title: Crypto Analyst
+description: "A market analysis agent with portfolio tools and cross-session learning"
 ---
 
 # Crypto Analyst
 
-An example that combines knowledge and WhatsApp channel config.
+A research-oriented agent that combines on-chain data tools with a vector knowledge base and cross-session learning. The agent improves its analysis over time using `LearningConfig`.
 
-### Definition: `agents/alpha.yaml`
+## Agent definition
+
 ```yaml
+# agent.yaml
 name: AlphaTracker
+description: Crypto market analyst with portfolio and on-chain tools
+personality: Analytical and data-driven. States confidence levels. Never gives financial advice — only factual analysis.
 model:
   provider: anthropic
-  model: claude-3-5-sonnet
+  model: claude-sonnet-4-20250514
+storage:
+  enabled: true
+  type: sqlite
+  db_url: alpha.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
 knowledge:
+  enabled: true
   type: lancedb
-channels:
-  - type: whatsapp
-    token_env: WHATSAPP_TOKEN
+  db_url: ./market_knowledge
 ```
 
-### Skill: `skills/portfolio/tools.py`
+## Custom skill
+
 ```python
-def balance(wallet: str) -> dict:
-    """Fetches balances."""
-    return {"ETH": 1.5}
+# skills/portfolio/tools.py
+
+def get_wallet_balances(wallet_address: str) -> dict:
+    """Fetch token balances for a wallet address.
+
+    Args:
+        wallet_address: EVM-compatible wallet address (0x...).
+
+    Returns:
+        Dict of token symbol to balance.
+    """
+    # In production, call Alchemy or Moralis API
+    return {"ETH": 1.5, "USDC": 4200.00, "ARB": 850.0}
+
+
+def get_token_price(symbol: str, currency: str = "USD") -> str:
+    """Get the current price of a token.
+
+    Args:
+        symbol: Token ticker symbol (e.g. ETH, BTC, SOL).
+        currency: Quote currency (default USD).
+
+    Returns:
+        Current price as a formatted string.
+    """
+    # In production, call CoinGecko or Binance API
+    prices = {"ETH": 3240.50, "BTC": 67100.00, "SOL": 148.20}
+    price = prices.get(symbol.upper(), 0)
+    return f"{symbol.upper()}: ${price:,.2f} {currency}"
+```
+
+## Run it
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+
+native_agent.print_response(
+    "Analyze my portfolio at 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+)
+```
+
+## As a team
+
+For broader market coverage, use a `broadcast` team to get analysis from multiple specialists simultaneously:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team
+
+team = TeamConfig(
+    name="Alpha Research Team",
+    mode=TeamMode.BROADCAST,
+    members=[
+        ClawAgent(name="OnChain", role="Analyze on-chain metrics: flows, whale activity, DEX volumes"),
+        ClawAgent(name="Macro", role="Analyze macro factors: rates, regulatory news, institutional flows"),
+        ClawAgent(name="Technical", role="Analyze price action, support/resistance, and momentum indicators"),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Give me a full analysis of ETH going into this week")
 ```

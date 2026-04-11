@@ -1,15 +1,13 @@
 ---
 title: Your First Agent
-description: "Build a minimal clawbridge agent"
+description: "Build a minimal clawbridge agent from scratch"
 ---
 
 # Your First Agent
 
-Start with the smallest working version:
+Start with the smallest working version, then add memory and teams once it works.
 
-## Goal
-
-Build one agent that can answer a prompt successfully.
+## Minimal agent
 
 ```python
 from clawbridge import ClawAgent, ModelConfig, build_agno_agent
@@ -21,33 +19,48 @@ agent = ClawAgent(
     model=ModelConfig(
         provider="anthropic",
         model="claude-sonnet-4-20250514",
-        api_key="ANTHROPIC_API_KEY",
     ),
 )
 
 native_agent = build_agno_agent(agent)
-response = native_agent.run("Say hello.")
-print(getattr(response, "content", response))
+native_agent.print_response("Say hello.")
 ```
+
+Agno reads `ANTHROPIC_API_KEY` from the environment automatically — no `api_key` field needed on `ModelConfig`.
 
 ## What each part does
 
-- `ClawAgent` defines the assistant
-- `ModelConfig` tells it which model to use
-- `build_agno_agent()` returns a native Agno agent
+- `ClawAgent` — the portable agent definition: name, personality, model, skills, memory config
+- `ModelConfig` — which provider and model to use
+- `build_agno_agent()` — compiles the `ClawAgent` into a native Agno `Agent` object
 
-## After this works
+The returned `native_agent` is a real Agno `Agent`. You can call `.print_response()`, `.run()`, `.run_async()`, or pass it to Agno's playground and serving layers directly.
 
-Next, add:
+## Loading from YAML
 
-- one skill
-- one memory value
+Most workflows use YAML instead of inline Python:
 
-Keep your first agent small. Add skills and memory only after this works.
+```yaml
+# agent.yaml
+name: Molty
+description: A helpful assistant
+personality: Helpful and concise.
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+```
 
-## Next Level: Persistent Memory
+```python
+from clawbridge import build_agno_agent, load_agent_config
 
-Once your basic agent works, enable Hermes-like persistent memory:
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+native_agent.print_response("Say hello.")
+```
+
+## Next level: Persistent memory
+
+Once your basic agent works, add cross-session memory:
 
 ```python
 from clawbridge import (
@@ -63,6 +76,29 @@ agent = ClawAgent(
 )
 
 native_agent = build_agno_agent(agent)
+native_agent.print_response("My name is Alex. Remember that.")
 ```
 
-The agent now automatically extracts and recalls user preferences across sessions.
+The agent extracts and stores facts from every conversation. See [Hermes Features](/docs/guides/hermes-features) for the full configuration including learning and session recall.
+
+## Next level: Multi-agent teams
+
+When a single agent hits its limits, split the work into a team:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team
+
+team = TeamConfig(
+    name="Research Team",
+    mode=TeamMode.COORDINATE,
+    members=[
+        ClawAgent(name="Researcher", role="Find information and cite sources"),
+        ClawAgent(name="Writer", role="Summarize findings clearly"),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Research the latest trends in AI agents")
+```
+
+See [Multi-Agent Teams](/docs/guides/teams) for the full guide.

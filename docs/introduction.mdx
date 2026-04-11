@@ -1,49 +1,63 @@
 ---
 title: Introduction
-description: "Build and deploy OpenClaw-style agents in Agno and Agentica"
+description: "Build OpenClaw-style agents inside Agno and Agentica — with persistent memory, learning, and multi-agent teams"
 ---
 
 # clawbridge
 
-`clawbridge` helps you build and deploy OpenClaw-style agents inside frameworks you already want to use.
+`clawbridge` is a Python toolkit for building [OpenClaw](https://github.com/openclawai/openclaw)-style agents inside frameworks you already use — primarily [Agno](https://github.com/agno-agi/agno) and Agentica. It handles workspace loading, skill resolution, prompt composition, and memory configuration so you can stay focused on what your agent does, not how it runs.
 
-If you are new to the project, think of it like this:
+## Why clawbridge?
 
-1. Scaffold an OpenClaw workspace
-2. Define an agent in `agent.yaml` or `agents.yaml`
-3. Add skills and workspace files
-4. Build or deploy for Agno or Agentica
-5. Add framework-specific extras only when needed
+Most agent frameworks make you choose between portable agent definitions and framework-native execution. clawbridge gives you both:
 
-## Start here
+- **OpenClaw workspace conventions** — define agents in YAML, organize skills in directories, keep workspace context in markdown files
+- **[Hermes-agent](https://github.com/nousresearch/hermes-agent)-like features** — persistent memory, cross-session recall, and self-improving learning loops
+- **Framework-native execution** — `build_agno_agent()` and `build_agno_team()` return real Agno objects you can run, serve, and extend
 
-Follow this path in order:
+## What you can build
 
-1. Quickstart
-2. Your First Agent
-3. Add Skills
-4. Add Memory
+| What | How |
+|---|---|
+| A single agent with skills and memory | `build_agno_agent(ClawAgent(...))` |
+| A self-improving agent with learning | `AgentMemoryMode.AUTOMATIC` + `LearningConfig` |
+| A multi-agent team | `build_agno_team(TeamConfig(...))` |
+| An Agentica-backed agent | `build_agentica_agent(ClawAgent(...))` |
 
-The main objects you will use first are:
+## Main builders
 
-- `ClawAgent`
-- `ClawSkill`
-- `ClawMemory`
-- `build_agno_agent()`
-- `build_agentica_agent()`
-- `clawbridge serve` for native Agno serving
+```python
+from clawbridge import build_agno_agent, build_agno_team, build_agentica_agent, load_agent_config
+```
 
-## Fastest path
+- `build_agno_agent(agent)` — compile a `ClawAgent` into a native Agno `Agent`
+- `build_agno_team(team)` — compile a `TeamConfig` into a native Agno `Team`
+- `build_agentica_agent(agent)` — compile a `ClawAgent` into an Agentica agent
+- `load_agent_config(path)` — load a `ClawAgent` or `TeamConfig` from a YAML file
 
-If you want the fastest path:
+## Key features
 
-- scaffold one workspace
-- run one small agent
-- load one skill
-- store one memory value
+**Persistent memory** — agents remember facts across sessions using SQLite or PostgreSQL. No manual session management.
 
-Do not start with architecture details unless you already need them. Start with the workspace and agent config, then choose the runtime and deployment path you need.
+**Learning** — with `LearningConfig`, agents extract summaries from past interactions and use them to improve future responses.
 
-## What comes later
+**Cross-session recall** — `SessionConfig(search_past_sessions=True)` lets the agent retrieve context from previous conversations automatically.
 
-There are more advanced parts of the project, including native serving and optional Agno deployment helpers, but they are intentionally not the starting point of the docs.
+**Multi-agent teams** — `TeamConfig` supports four coordination modes: `coordinate`, `route`, `broadcast`, and `tasks`. Each member is a full `ClawAgent` with its own model, skills, and memory.
+
+**OpenClaw workspaces** — `clawbridge scaffold ./my-workspace` creates the directory structure, starter YAML, and skills. The workspace files (`AGENTS.md`, `MEMORY.md`, `BOOTSTRAP.md`) become part of the agent's system prompt automatically.
+
+**Skill precedence** — skills are resolved from the workspace with configurable gating and override rules. You can load skills globally or per-agent.
+
+## Recommended learning path
+
+| Step | What you'll learn |
+|---|---|
+| [Quickstart](/docs/quickstart) | Install, scaffold a workspace, run your first agent with memory |
+| [Your First Agent](/docs/getting-started/first-agent) | `ClawAgent`, `ModelConfig`, and the build flow |
+| [Add Skills](/docs/getting-started/add-skills) | Skill directories, tool functions, and precedence |
+| [Add Memory](/docs/getting-started/memory) | `ClawMemory`, `StorageConfig`, and `AgentMemoryMode` |
+| [Hermes Features](/docs/guides/hermes-features) | Learning, session recall, and memory modes |
+| [Teams](/docs/guides/teams) | `TeamConfig`, `TeamMode`, and multi-agent coordination |
+
+Start with the Quickstart. Skip to Teams or Hermes Features once your single agent works.

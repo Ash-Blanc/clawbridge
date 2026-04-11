@@ -1,15 +1,15 @@
 ---
 title: Add Memory
-description: "Store simple facts and preferences"
+description: "Store facts with ClawMemory, then enable persistent cross-session recall"
 ---
 
 # Add Memory
 
-Once your first agent runs, the next useful step is memory.
+clawbridge has two memory layers: `ClawMemory` for lightweight in-process key-value storage, and native persistent memory backed by SQLite or PostgreSQL for real cross-session recall.
 
-## Goal
+## ClawMemory
 
-Store one fact or preference and read it back.
+`ClawMemory` is a simple in-process store for facts and preferences. Good for small amounts of context you want to thread through a session without a database.
 
 ```python
 from clawbridge import ClawMemory
@@ -19,12 +19,53 @@ memory.remember("user_name", "Alice", category="preference")
 memory.remember("timezone", "UTC", category="preference")
 
 print(memory.recall("user_name"))
+# → "Alice"
 ```
 
-Use memory for:
+Use `ClawMemory` for:
 
-- preferences
-- known facts
-- lightweight conversation context
+- user preferences within a session
+- known facts you want to inject into prompts
+- lightweight context threading
 
-Do not overcomplicate memory at the start. Begin with a few clear keys and categories.
+## Going further: Persistent memory
+
+`ClawMemory` doesn't survive process restarts. For real cross-session memory that works like [Hermes-agent](https://github.com/nousresearch/hermes-agent), use `agent_memory_mode` with a `StorageConfig`:
+
+```python
+from clawbridge import ClawAgent, AgentMemoryMode, StorageConfig, build_agno_agent
+
+agent = ClawAgent(
+    name="Molty",
+    storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+    agent_memory_mode=AgentMemoryMode.AUTOMATIC,
+)
+
+native_agent = build_agno_agent(agent)
+# The agent now automatically extracts and recalls facts across sessions
+native_agent.print_response("My favorite language is Python.")
+
+# Next session — the agent remembers:
+native_agent.print_response("What's my favorite language?")
+# → "Your favorite language is Python."
+```
+
+### Memory modes
+
+| Mode | Behavior |
+|---|---|
+| `AUTOMATIC` | Agent decides when to store and retrieve memories |
+| `ALWAYS` | Store and retrieve on every turn |
+| `NEVER` | Disable persistent memory |
+
+### YAML equivalent
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic
+```
+
+See the [Hermes Features](/docs/guides/hermes-features) guide for the full configuration: learning loops, session recall, and memory summarization.

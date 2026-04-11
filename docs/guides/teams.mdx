@@ -1,0 +1,162 @@
+---
+title: Multi-Agent Teams
+description: "Coordinate multiple specialized agents with Agno Teams"
+---
+
+# Multi-Agent Teams
+
+Build teams of specialized agents that collaborate to solve complex tasks.
+
+## Why teams?
+
+Single agents hit limits: context windows fill up, reasoning quality degrades when a prompt covers too many domains, and debugging a 10k-token system prompt is painful. Teams distribute work across focused agents, each with its own model, skills, and context.
+
+## Quick example
+
+```python
+from clawbridge import (
+    ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team,
+)
+
+team = TeamConfig(
+    name="Research Team",
+    mode=TeamMode.COORDINATE,
+    members=[
+        ClawAgent(
+            name="Researcher",
+            role="Find relevant information and cite sources",
+            model=ModelConfig(provider="openai", model="gpt-4o"),
+        ),
+        ClawAgent(
+            name="Writer",
+            role="Draft clear, concise summaries from research",
+            model=ModelConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+        ),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Research the latest trends in AI agents")
+```
+
+## Team modes
+
+| Mode | What it does | Use when |
+|---|---|---|
+| `coordinate` | Leader decomposes work, delegates to members, synthesizes | General-purpose collaboration |
+| `route` | Leader routes to a single specialist, returns their response | Task classification / support routing |
+| `broadcast` | All members process the same task, leader synthesizes | Gathering diverse perspectives |
+| `tasks` | Sequential task list until goal is complete | Multi-step workflows |
+
+## YAML configuration
+
+```yaml
+# team.yaml
+name: Research Team
+mode: coordinate
+model:
+  provider: openai
+  model: gpt-4o
+members:
+  - name: Researcher
+    role: Find relevant information and cite sources
+    model:
+      provider: openai
+      model: gpt-4o
+  - name: Writer
+    role: Draft clear, concise summaries
+    model:
+      provider: anthropic
+      model: claude-sonnet-4-20250514
+```
+
+Load and build:
+
+```python
+from clawbridge import build_agno_team
+
+native_team = build_agno_team("./team.yaml")
+native_team.print_response("Research AI agent frameworks")
+```
+
+## Coordinator model
+
+The team leader (coordinator) decides how to delegate. By default it uses the first available member model. Set `model` on the `TeamConfig` to give the coordinator its own model:
+
+```python
+team = TeamConfig(
+    name="Led Team",
+    mode=TeamMode.COORDINATE,
+    model=ModelConfig(provider="openai", model="gpt-4o"),
+    members=[
+        ClawAgent(name="Analyst", role="Analyze data"),
+        ClawAgent(name="Reporter", role="Write the report"),
+    ],
+)
+```
+
+## Teams with Hermes features
+
+Teams support the same persistent memory, learning, and cross-session recall as single agents. Add storage and memory config to the `TeamConfig`:
+
+```yaml
+name: Learning Research Team
+mode: coordinate
+storage:
+  enabled: true
+  type: sqlite
+  db_url: team.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
+members:
+  - name: Researcher
+    role: Find information and cite sources
+    model:
+      provider: openai
+      model: gpt-4o
+  - name: Writer
+    role: Summarize findings clearly
+    model:
+      provider: anthropic
+      model: claude-sonnet-4-20250514
+```
+
+The team will remember user preferences, project context, and past research across sessions.
+
+## Route mode: support routing
+
+A common pattern is using `route` mode to classify incoming requests and send them to the right specialist:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, build_agno_team
+
+team = TeamConfig(
+    name="Support Team",
+    mode=TeamMode.ROUTE,
+    members=[
+        ClawAgent(name="Billing", role="Handle billing questions and refunds"),
+        ClawAgent(name="Technical", role="Solve technical problems and bugs"),
+        ClawAgent(name="Sales", role="Handle upgrade and pricing questions"),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("My invoice shows double charges this month")
+# Routes to Billing automatically
+```
+
+## When to use teams vs single agents
+
+Use a **single agent** when:
+- The task fits one domain of expertise
+- You want to minimize latency and token costs
+- You're prototyping (start simple, add members later)
+
+Use a **team** when:
+- A task requires multiple specialized domains
+- A single agent's context window fills up
+- You want each agent focused on a narrow scope
+- You need parallel processing of the same task (`broadcast`)
