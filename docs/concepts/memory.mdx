@@ -1,13 +1,13 @@
 ---
 title: Memory
-description: "ClawMemory helpers and framework-native storage"
+description: "ClawMemory helpers, framework-native storage, and persistent memory"
 ---
 
 # Memory
 
-There are two memory layers in `clawbridge`:
+There are three memory layers in `clawbridge`:
 
-## `ClawMemory`
+## ClawMemory
 
 `ClawMemory` is the lightweight memory helper used by `clawbridge` prompt assembly and runtime wrappers.
 
@@ -17,13 +17,44 @@ It provides:
 - short-term conversation history
 - prompt-time memory summaries
 
+```python
+from clawbridge import ClawMemory
+
+memory = ClawMemory()
+memory.remember("user_name", "Alice", category="preference")
+print(memory.recall("user_name"))
+```
+
+Use `ClawMemory` for prompt-time and lightweight state.
+
 ## Framework-native storage
 
-Some frameworks can also map `ClawAgent.storage` into native storage primitives.
+Some frameworks can map `ClawAgent.storage` into native storage primitives. Today Agno has native storage support; Agentica does not.
 
-Today:
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+```
 
-- Agno has native storage support
-- Agentica does not
+## Native persistent memory (Hermes-like)
 
-Use `ClawMemory` for prompt-time and lightweight state, and use native storage only when your target framework supports it.
+For agents that remember user preferences, learn from interactions, and recall past sessions, use the Hermes-like configuration:
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic    # off | automatic | agentic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
+  enable_session_summaries: true
+```
+
+`AgentMemoryMode.AUTOMATIC` auto-extracts facts from conversations. `AgentMemoryMode.AGENTIC` gives the agent full control over what it remembers.
+
+All of these require `storage.enabled: true` with a persistent database (sqlite or postgres). See [Hermes Features](/docs/guides/hermes-features) for the full configuration guide.

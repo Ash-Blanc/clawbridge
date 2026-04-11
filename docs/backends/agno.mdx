@@ -27,6 +27,45 @@ This path currently supports:
 - knowledge integration
 - channel policy and Agno interface wiring
 
+## Teams
+
+Use `build_agno_team(...)` to create native Agno `Team` objects:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team
+
+team = TeamConfig(
+    name="Research Team",
+    mode=TeamMode.COORDINATE,
+    members=[
+        ClawAgent(
+            name="Researcher",
+            role="Find relevant information and cite sources",
+            model=ModelConfig(provider="openai", model="gpt-4o"),
+        ),
+        ClawAgent(
+            name="Writer",
+            role="Draft clear, concise summaries from research",
+            model=ModelConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+        ),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Research the latest trends in AI agents")
+```
+
+Four team modes are available:
+
+| Mode | What it does | Use when |
+|---|---|---|
+| `coordinate` | Leader decomposes work, delegates to members, synthesizes | General-purpose collaboration |
+| `route` | Leader routes to a single specialist, returns their response | Task classification / support routing |
+| `broadcast` | All members process the same task, leader synthesizes | Gathering diverse perspectives |
+| `tasks` | Sequential task list until goal is complete | Multi-step workflows |
+
+Teams support YAML configuration and Hermes-like features (persistent memory, learning, cross-session recall). See the [Teams guide](/docs/guides/teams) for the full walkthrough.
+
 ## Deploy path
 
 Use Agno when you want the strongest deployment story in the repo today.
@@ -54,6 +93,7 @@ These features should be treated as Agno extensions rather than generic guarante
 - database providers from `storage`
 - vector knowledge ingestion from `knowledge`
 - Slack and WhatsApp interfaces from `channels`
+- multi-agent teams via `build_agno_team()`
 - optional filesystem deployment helper via `clawbridge.app.ClawApp`
 
 ## Hermes-Like Features

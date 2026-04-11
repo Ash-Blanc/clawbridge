@@ -1,21 +1,65 @@
 ---
 title: Messaging Gateways
+description: "Connect agents to Slack, WhatsApp, and other messaging platforms"
 ---
 
-# Channels
+# Messaging Gateways
 
-Channels are currently an Agno-oriented extension with a shared policy layer for DM, group, mention, and heartbeat behavior.
+Channels connect your agent to messaging platforms. This is currently an Agno-oriented feature.
 
-Configure them in the agent definition:
+## Supported platforms
+
+| Platform | Config type | Required env vars |
+|---|---|---|
+| Slack | `slack` | `SLACK_BOT_TOKEN`, `SLACK_SIGNING_SECRET` |
+| WhatsApp | `whatsapp` | `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_VERIFY_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` |
+
+## Configuration
+
+Add channels to your agent definition:
 
 ```yaml
+# agent.yaml
+name: Support Bot
+model:
+  provider: openai
+  model: gpt-4o
 channels:
   - type: slack
     token_env: SLACK_BOT_TOKEN
+    verification_token_env: SLACK_SIGNING_SECRET
   - type: whatsapp
-    token_env: WHATSAPP_TOKEN
+    token_env: WHATSAPP_ACCESS_TOKEN
+    verification_token_env: WHATSAPP_VERIFY_TOKEN
+    bot_id_env: WHATSAPP_PHONE_NUMBER_ID
 ```
 
-Tokens are read from environment variables.
+Tokens are read from environment variables — never hardcode secrets.
 
-Today, treat transport execution as partial Agno-specific functionality.
+## Channel policy
+
+clawbridge includes a channel policy layer that controls behavior across surfaces:
+
+- **DM policy** — who can message the agent directly
+- **Group policy** — allowlists, mention requirements
+- **Heartbeat policy** — periodic autonomous actions
+
+These policies are defined on `ClawAgent.channel_policy` and evaluated before each message is processed. See `ChannelSessionPolicy` in the API for details.
+
+## Deploying with channels
+
+Channels require `clawbridge serve` to expose the webhook endpoints:
+
+```bash
+export SLACK_BOT_TOKEN="xoxb-..."
+export SLACK_SIGNING_SECRET="..."
+clawbridge serve --port 8000
+```
+
+This starts a FastAPI server with Agno's `AgentOS` that handles incoming webhook events from Slack and WhatsApp.
+
+## Limitations
+
+- Channels are Agno-specific — `build_agentica_agent()` does not wire channels
+- Transport execution is partial — not all platform features are mapped
+- Discord support is defined in the type system but not yet implemented

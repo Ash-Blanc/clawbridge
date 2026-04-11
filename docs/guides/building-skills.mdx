@@ -1,23 +1,128 @@
 ---
 title: Building Skills
+description: "Create OpenClaw skills from Python or SKILL.md packages"
 ---
 
-# Skills
+# Building Skills
 
-Skills are OpenClaw-style packages. In a workspace, they are usually discovered from `skills/`, but you can also attach them explicitly from Python.
+Skills are modular capability packages for your agent. clawbridge supports two styles.
 
-### 1. Code-First (Recommended)
+## 1. Code-first (recommended)
 
-Create a directory with `tools.py`. No extra config is required.
+Create a directory with a `tools.py` file. No config needed:
 
-```python
-def add(a: int, b: int) -> int:
-    """Adds two numbers."""
-    return a + b
+```text
+skills/calculator/
+  tools.py
 ```
 
-### 2. OpenClaw Standard
+```python
+# skills/calculator/tools.py
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
 
-Add `SKILL.md` for human-readable instructions and explicit YAML schemas.
+def multiply(a: float, b: float) -> float:
+    """Multiply two numbers."""
+    return a * b
+```
 
-If a skill defines only metadata, provide the implementation separately through `ClawAgent.tools`.
+clawbridge auto-discovers callables and generates tool metadata from type hints and docstrings.
+
+```python
+from pathlib import Path
+from clawbridge import ClawAgent, ClawSkill, build_agno_agent
+
+skill = ClawSkill.from_dir(Path("./skills/calculator"))
+agent = ClawAgent(name="Molty", skills=[skill])
+native_agent = build_agno_agent(agent)
+native_agent.print_response("What is 42 * 17?")
+```
+
+## 2. OpenClaw standard (SKILL.md)
+
+For richer metadata, add a `SKILL.md` with YAML frontmatter:
+
+```text
+skills/web_search/
+  SKILL.md
+  tools.py
+```
+
+```markdown
+---
+name: web-search
+description: Search the web for current information
+version: 1.0.0
+tools:
+  - name: search_web
+    description: Search the web using DuckDuckGo
+    parameters:
+      - name: query
+        type: string
+        description: The search query
+        required: true
+      - name: max_results
+        type: integer
+        description: Maximum results
+        required: false
+        default: 5
+---
+# Skill: Web Search
+
+## Guidelines
+- Always cite your sources
+- Prefer recent results
+- Summarize findings concisely
+```
+
+The markdown body becomes agent instructions injected into the prompt. The YAML frontmatter defines tool schemas.
+
+## Workspace skill discovery
+
+When your agent has a `workspace_path`, skills in `skills/` are loaded automatically:
+
+```yaml
+# agent.yaml
+name: Molty
+workspace_path: .
+```
+
+```text
+my-workspace/
+  AGENTS.md
+  agent.yaml
+  skills/
+    calculator/
+      tools.py
+    web_search/
+      SKILL.md
+      tools.py
+```
+
+Both skills are discovered and loaded without explicit `ClawSkill` calls.
+
+## Skill precedence
+
+When the same skill name appears in multiple locations, workspace skills win:
+
+| Priority | Source | Example |
+|---|---|---|
+| Highest | Workspace `skills/` | `./skills/search/` |
+| | Managed (user-level) | `~/.clawbridge/skills/search/` |
+| | Bundled (built-in) | Package bundled skills |
+| Lowest | Extra paths | Explicit `skill_paths` |
+
+## Skill gating
+
+Skills can declare requirements in their frontmatter:
+
+```yaml
+requires:
+  env:
+    - SLACK_TOKEN
+  binaries:
+    - docker
+```
+
+Skills with unmet requirements are silently skipped with a clear reason in `agent.skill_resolution`.

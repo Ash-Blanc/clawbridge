@@ -1,15 +1,79 @@
 ---
-title: Building OpenClaws
+title: Building OpenClaw-Style Agents
+description: "Workspace files, agent config, prompt assembly, and runtime selection"
 ---
 
 # Building OpenClaw-Style Agents
 
-OpenClaw-inspired agents in `clawbridge` are defined by:
+OpenClaw agents are workspace-first: behavior is defined in markdown files, not just code.
 
-1. **Workspace files** like `AGENTS.md`, `MEMORY.md`, and `BOOTSTRAP.md`
-2. **Agent config** via `ClawAgent`
-3. **Prompt assembly** via `build_system_prompt()`
-4. **Capabilities** via `ClawSkill` and `ToolDefinition`
-5. **Runtime choice** via `build_agno_agent()` or `build_agentica_agent()`
+## Workspace files
 
-Start with the workspace and agent config first. Add framework-specific features only when you need them.
+When you run `clawbridge scaffold`, you get these files:
+
+| File | Purpose | When loaded |
+|---|---|---|
+| `AGENTS.md` | Core agent directives and rules | Always (required) |
+| `SOUL.md` | Personality and behavioral posture | Always |
+| `TOOLS.md` | Tool usage policy | Always |
+| `IDENTITY.md` | Agent name and role | Always |
+| `USER.md` | Persistent user preferences | Always |
+| `MEMORY.md` | Curated long-term context | Main sessions only |
+| `BOOTSTRAP.md` | First-run setup checklist | First run only, then remove |
+| `HEARTBEAT.md` | Instructions for heartbeat-triggered runs | Heartbeat runs only |
+| `memory/*.md` | Daily memory notes (e.g. `2026-04-11.md`) | Always |
+
+Only `AGENTS.md` is required. Everything else is optional.
+
+## Agent config
+
+Define your agent in `agent.yaml`:
+
+```yaml
+name: Molty
+description: A personal research assistant
+personality: Pragmatic and concise. Cites sources.
+workspace_path: .
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+```
+
+Load and build:
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+native_agent.print_response("What do you know about me?")
+```
+
+## Prompt assembly
+
+The `OpenClawPromptBuilder` composes a structured system prompt in this order:
+
+1. **Identity** — name, description, personality, role
+2. **Tooling** — registered tools and their parameters
+3. **Safety** — default behavioral guardrails
+4. **Skills** — loaded skill instructions
+5. **Self-update** — workspace-first customization rules
+6. **Workspace** — session scope, paths, state
+7. **Docs** — reference documentation links
+8. **Workspace files** — injected content from AGENTS.md, SOUL.md, etc.
+9. **Memory** — ClawMemory context summary
+10. **Sandbox** — execution environment metadata
+11. **Current time** — timezone and local time
+12. **Runtime** — model, session, trigger info
+13. **Custom instructions** — `system_prompt` and `additional_instructions`
+
+You don't need to understand this ordering to use clawbridge — it happens automatically when you call `build_agno_agent()`.
+
+## Adding capabilities
+
+Once the workspace agent works, layer on:
+
+- **Skills** — add `skills/` directories ([Add Skills](/docs/getting-started/add-skills))
+- **Memory** — enable persistent memory ([Hermes Features](/docs/guides/hermes-features))
+- **Teams** — coordinate multiple agents ([Teams](/docs/guides/teams))
+- **Channels** — connect to Slack or WhatsApp ([Gateways](/docs/guides/gateways))
