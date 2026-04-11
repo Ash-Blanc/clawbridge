@@ -54,9 +54,12 @@ from clawbridge.core.skill import (
 from clawbridge.scaffold import create_openclaw_workspace
 from clawbridge.core.workspace import OpenClawWorkspace, WorkspaceContextScope, WorkspaceDocument
 from clawbridge.core.types import (
+    AgentMemoryMode,
     LLMProvider,
+    LearningConfig,
     MemoryConfig,
     ModelConfig,
+    SessionConfig,
     ToolDefinition,
     ToolParameter,
 )
@@ -64,6 +67,7 @@ from clawbridge.core.types import (
 __all__ = [
     "ClawAgent",
     "ClawMemory",
+    "LearningConfig",
     "MultiAgentConfig",
     "MultiAgentDefinition",
     "ChannelMessageContext",
@@ -99,9 +103,12 @@ __all__ = [
     "OpenClawWorkspace",
     "WorkspaceContextScope",
     "WorkspaceDocument",
+    "AgentMemoryMode",
     "LLMProvider",
+    "LearningConfig",
     "MemoryConfig",
     "ModelConfig",
+    "SessionConfig",
     "ToolDefinition",
     "ToolParameter",
     "create_openclaw_workspace",

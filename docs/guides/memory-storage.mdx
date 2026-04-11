@@ -4,6 +4,30 @@ title: Memory & Storage
 
 # Memory
 
+## Native Persistent Memory
+
+The recommended approach for Hermes-like memory is `agent_memory_mode`:
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic
+```
+
+This tells the Agno backend to automatically extract and store memories from conversations. The agent will recall relevant memories in future sessions without any manual wiring.
+
+Three modes are available:
+
+- `off` — use only `ClawMemory` for prompt injection (default, backward-compatible)
+- `automatic` — framework extracts memories after each run
+- `agentic` — agent decides when to create, update, or delete memories
+
+`ClawMemory` still works as a lightweight helper regardless of the mode.
+
+## Storage Layers
+
 There are two memory layers in `clawbridge`:
 
 1. `ClawMemory`, which is the lightweight helper used by `clawbridge`

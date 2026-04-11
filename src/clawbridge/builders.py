@@ -14,7 +14,14 @@ from clawbridge.core.multi_agent import (
     looks_like_multi_agent_config,
 )
 from clawbridge.core.workspace import OpenClawWorkspace
-from clawbridge.core.types import ChannelConfig, KnowledgeConfig, StorageConfig
+from clawbridge.core.types import (
+    AgentMemoryMode,
+    ChannelConfig,
+    KnowledgeConfig,
+    LearningConfig,
+    SessionConfig,
+    StorageConfig,
+)
 from clawbridge.skills.loader import SkillLoader
 
 
@@ -74,6 +81,9 @@ def build_agno_agent(
     storage: StorageConfig | None = None,
     knowledge: KnowledgeConfig | None = None,
     channels: Sequence[ChannelConfig] | None = None,
+    agent_memory_mode: AgentMemoryMode | None = None,
+    learning: LearningConfig | None = None,
+    session: SessionConfig | None = None,
 ) -> Any:
     """Build a native Agno agent from an OpenClaw-style agent spec."""
     agent = load_agent_config(agent_config, agent_id=agent_id)
@@ -84,6 +94,12 @@ def build_agno_agent(
         agent.knowledge = knowledge
     if channels is not None:
         agent.channels = list(channels)
+    if agent_memory_mode is not None:
+        agent.agent_memory_mode = agent_memory_mode
+    if learning is not None:
+        agent.learning = learning
+    if session is not None:
+        agent.session = session
 
     return AgnoBackend(agent, memory).compile()
 
