@@ -18,6 +18,8 @@ It helps you build and deploy OpenClaw-style agents inside frameworks you alread
 - Agentica
 - more adapters over time
 
+With the Agno 2.5 integration, `clawbridge` also supports Hermes-like patterns: agents with persistent memory, self-improvement across sessions, and cross-session recall.
+
 The shared value is OpenClaw conventions plus framework-native execution:
 
 - `ClawAgent` for OpenClaw-style agent config
@@ -82,6 +84,93 @@ ModelConfig(
     model="mistral-large-latest",
     api_key="MISTRAL_API_KEY",
 )
+```
+
+## Hermes-Like Features
+
+Build agents with persistent memory, self-improvement, and cross-session recall — the patterns that make [Hermes-agent](https://github.com/nousresearch/hermes-agent) compelling, powered by Agno's native runtime.
+
+### Persistent Memory
+
+The agent automatically remembers user preferences and facts across sessions:
+
+```python
+from clawbridge import (
+    ClawAgent, AgentMemoryMode, ModelConfig, StorageConfig, build_agno_agent,
+)
+
+agent = ClawAgent(
+    name="Molty",
+    description="A personal assistant that remembers you",
+    personality="Helpful, concise, and learns from every interaction.",
+    model=ModelConfig(provider="openai", model="gpt-4o"),
+    storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+    agent_memory_mode=AgentMemoryMode.AUTOMATIC,
+)
+
+native_agent = build_agno_agent(agent)
+
+# First conversation — agent learns your preferences
+native_agent.print_response("My name is Alice and I prefer email over Slack.")
+
+# Later conversation — agent recalls without being told
+native_agent.print_response("What's the best way to reach me?")
+```
+
+Use `AgentMemoryMode.AGENTIC` to give the agent full control over what it remembers.
+
+### Self-Improvement (Learning)
+
+The agent stores learnings from past runs and improves over time:
+
+```python
+from clawbridge import ClawAgent, LearningConfig, SessionConfig, StorageConfig, build_agno_agent
+
+agent = ClawAgent(
+    name="Molty",
+    learning=LearningConfig(enabled=True),
+    session=SessionConfig(search_past_sessions=True),
+    storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+)
+```
+
+### Cross-Session Recall
+
+Search past conversations for relevant context:
+
+```python
+agent = ClawAgent(
+    name="Molty",
+    session=SessionConfig(
+        search_past_sessions=True,
+        num_past_sessions_to_search=5,
+        enable_session_summaries=True,
+    ),
+)
+```
+
+### All Together
+
+Combine everything for the full Hermes-like experience:
+
+```python
+agent = ClawAgent(
+    name="Molty",
+    description="A self-improving personal assistant",
+    personality="Helpful and learns from every interaction.",
+    model=ModelConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+    storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+    agent_memory_mode=AgentMemoryMode.AUTOMATIC,
+    learning=LearningConfig(enabled=True),
+    session=SessionConfig(
+        search_past_sessions=True,
+        enable_session_summaries=True,
+        compress_tool_results=True,
+        reasoning=True,
+    ),
+)
+
+native_agent = build_agno_agent(agent)
 ```
 
 ## Deploy With Agno

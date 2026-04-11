@@ -44,3 +44,25 @@ Next, add:
 - one memory value
 
 Keep your first agent small. Add skills and memory only after this works.
+
+## Next Level: Persistent Memory
+
+Once your basic agent works, enable Hermes-like persistent memory:
+
+```python
+from clawbridge import (
+    ClawAgent, AgentMemoryMode, ModelConfig, StorageConfig, build_agno_agent,
+)
+
+agent = ClawAgent(
+    name="Molty",
+    description="A helpful assistant that remembers",
+    model=ModelConfig(provider="anthropic", model="claude-sonnet-4-20250514"),
+    storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+    agent_memory_mode=AgentMemoryMode.AUTOMATIC,
+)
+
+native_agent = build_agno_agent(agent)
+```
+
+The agent now automatically extracts and recalls user preferences across sessions.
