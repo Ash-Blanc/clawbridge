@@ -15,10 +15,13 @@ from clawbridge.core.session import OpenClawSessionContext
 from clawbridge.core.skill import ClawSkill, SkillLoadRecord
 from clawbridge.core.workspace import OpenClawWorkspace
 from clawbridge.core.types import (
+    AgentMemoryMode,
     ChannelConfig,
     KnowledgeConfig,
+    LearningConfig,
     MemoryConfig,
     ModelConfig,
+    SessionConfig,
     StorageConfig,
     ToolDefinition,
 )
@@ -54,6 +57,11 @@ class ClawAgent(BaseModel):
 
     # ── Memory ──
     memory_config: MemoryConfig = Field(default_factory=MemoryConfig)
+
+    # ── Hermes-like Features ──
+    agent_memory_mode: AgentMemoryMode = Field(default=AgentMemoryMode.OFF)
+    learning: LearningConfig = Field(default_factory=LearningConfig)
+    session: SessionConfig = Field(default_factory=SessionConfig)
 
     # ── Sandbox ──
     sandbox: SandboxConfig = Field(default_factory=SandboxConfig)

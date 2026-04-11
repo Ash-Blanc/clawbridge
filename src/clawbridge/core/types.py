@@ -135,3 +135,42 @@ class MemoryConfig(BaseModel):
     # Per-conversation context
     short_term: bool = True
     max_context_messages: int = 50
+
+
+class AgentMemoryMode(StrEnum):
+    """How the framework backend should handle native persistent memory.
+
+    - OFF: Only use ClawMemory for prompt injection (current default behavior).
+    - AUTOMATIC: Framework extracts and stores memories after each run.
+    - AGENTIC: Agent gets memory tools and decides when to remember/forget.
+    """
+    OFF = "off"
+    AUTOMATIC = "automatic"
+    AGENTIC = "agentic"
+
+
+class LearningConfig(BaseModel):
+    """Self-improvement / learning configuration.
+
+    When enabled, the framework backend stores learnings from agent runs
+    and injects them into future sessions — similar to Hermes-agent's
+    self-improvement loop.
+    """
+    enabled: bool = False
+    add_learnings_to_context: bool = True
+
+
+class SessionConfig(BaseModel):
+    """Cross-session behavior configuration.
+
+    Controls how the agent interacts with past sessions, manages context
+    compression, and maintains continuity across conversations.
+    """
+    search_past_sessions: bool = False
+    num_past_sessions_to_search: int = 3
+    num_past_session_runs_in_search: int = 5
+    enable_session_summaries: bool = False
+    compress_tool_results: bool = False
+    add_history_to_context: bool = True
+    num_history_runs: int = 3
+    reasoning: bool = False

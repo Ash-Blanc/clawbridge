@@ -14,7 +14,7 @@ from clawbridge.backends.base import ClawBackend
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.memory import ClawMemory
 from clawbridge.core.session import OpenClawSessionContext
-from clawbridge.core.types import LLMProvider
+from clawbridge.core.types import AgentMemoryMode, LLMProvider
 
 
 class AgnoBackend(ClawBackend):
@@ -117,8 +117,8 @@ class AgnoBackend(ClawBackend):
 
         return agno_tools
 
-    def _build_memory(self) -> Any | None:
-        """Build Agno-native memory (Db) from ClawAgent storage config."""
+    def _build_db(self) -> Any | None:
+        """Build Agno-native database (Db) from ClawAgent storage config."""
         if not self.agent.storage.enabled:
             return None
             
@@ -139,6 +139,54 @@ class AgnoBackend(ClawBackend):
                 "Install clawbridge[agno] with SQL backends enabled."
             ) from exc
         return None
+
+    def _apply_memory_config(self, agent_kwargs: dict[str, Any]) -> None:
+        """Configure Agno's native memory based on agent_memory_mode."""
+        mode = self.agent.agent_memory_mode
+
+        if mode == AgentMemoryMode.AUTOMATIC:
+            agent_kwargs["update_memory_on_run"] = True
+            agent_kwargs["enable_user_memories"] = True
+            agent_kwargs["add_memories_to_context"] = True
+        elif mode == AgentMemoryMode.AGENTIC:
+            agent_kwargs["enable_agentic_memory"] = True
+            agent_kwargs["enable_user_memories"] = True
+            agent_kwargs["add_memories_to_context"] = True
+
+        # When native memory is enabled, also wire up history for continuity
+        if mode != AgentMemoryMode.OFF:
+            agent_kwargs.setdefault("add_history_to_context", True)
+            agent_kwargs.setdefault("read_chat_history", True)
+
+    def _apply_learning_config(self, agent_kwargs: dict[str, Any]) -> None:
+        """Configure Agno's learning/self-improvement feature."""
+        if not self.agent.learning.enabled:
+            return
+        agent_kwargs["learning"] = True
+        agent_kwargs["add_learnings_to_context"] = self.agent.learning.add_learnings_to_context
+
+    def _apply_session_config(self, agent_kwargs: dict[str, Any]) -> None:
+        """Configure Agno's session management features."""
+        sc = self.agent.session
+
+        if sc.search_past_sessions:
+            agent_kwargs["search_past_sessions"] = True
+            agent_kwargs["num_past_sessions_to_search"] = sc.num_past_sessions_to_search
+            agent_kwargs["num_past_session_runs_in_search"] = sc.num_past_session_runs_in_search
+
+        if sc.enable_session_summaries:
+            agent_kwargs["enable_session_summaries"] = True
+            agent_kwargs["add_session_summary_to_context"] = True
+
+        if sc.compress_tool_results:
+            agent_kwargs["compress_tool_results"] = True
+
+        if sc.add_history_to_context:
+            agent_kwargs["add_history_to_context"] = True
+            agent_kwargs["num_history_runs"] = sc.num_history_runs
+
+        if sc.reasoning:
+            agent_kwargs["reasoning"] = True
 
     def _build_embedder(self) -> Any:
         from agno.knowledge.embedder.openai import OpenAIEmbedder
@@ -206,28 +254,16 @@ class AgnoBackend(ClawBackend):
         self,
         session_context: OpenClawSessionContext | None = None,
     ) -> Any:
-        """
-        Compile ClawAgent → Agno Agent.
-
-        Agno agent structure (from their SDK):
-            Agent(
-                name=...,
-                model=OpenAI(id="gpt-4o"),
-                tools=[...],
-                db=InMemoryDb(),
-                knowledge=Knowledge(...),
-                add_history_to_context=True,
-                read_chat_history=True,
-                instructions=[...],
-                description=...,
-                markdown=True,
-            )
-        """
+        """Compile ClawAgent → Agno Agent."""
         self._ensure_imports()
         Agent = self._agno_mod["Agent"]
 
-        # Only pass our manual JSON memory if native storage is NOT enabled
-        passed_memory = self.memory if not self.agent.storage.enabled else None
+        # Build prompt — only inject ClawMemory when NOT using Agno-native memory
+        use_native_memory = self.agent.agent_memory_mode != AgentMemoryMode.OFF
+        passed_memory = None if use_native_memory else self.memory
+        # Also skip ClawMemory when native storage provides history
+        if self.agent.storage.enabled:
+            passed_memory = None
         system_prompt = self.build_system_prompt(
             passed_memory,
             session_context=session_context,
@@ -246,13 +282,20 @@ class AgnoBackend(ClawBackend):
         if tools:
             agent_kwargs["tools"] = tools
 
-        # Memory / Db
-        agno_db = self._build_memory()
+        # Database (storage)
+        agno_db = self._build_db()
         if agno_db:
             agent_kwargs["db"] = agno_db
-            agent_kwargs["add_history_to_context"] = True
-            agent_kwargs["read_chat_history"] = True
-            
+
+        # Native memory (Hermes-like persistent memory)
+        self._apply_memory_config(agent_kwargs)
+
+        # Learning (Hermes-like self-improvement)
+        self._apply_learning_config(agent_kwargs)
+
+        # Session config (cross-session, compression, reasoning)
+        self._apply_session_config(agent_kwargs)
+
         # Knowledge
         agno_knowledge = self._build_knowledge()
         if agno_knowledge:
@@ -272,19 +315,18 @@ class AgnoBackend(ClawBackend):
         session_context = self.get_session_context(session_id)
         agent = self._compile_for_session(session_context)
 
-        # Track in our manual memory only if native storage is disabled
-        if not self.agent.storage.enabled:
+        use_native_memory = self.agent.agent_memory_mode != AgentMemoryMode.OFF
+        track_manually = not self.agent.storage.enabled and not use_native_memory
+
+        if track_manually:
             self.memory.add_message(session_id, "user", message)
 
-        # Use arun for async execution in Agno, passing the session_id
         response = await agent.arun(message, session_id=session_id)
-
-        # Extract content from Agno's response
         content = self._extract_content(response)
 
-        if not self.agent.storage.enabled:
+        if track_manually:
             self.memory.add_message(session_id, "assistant", content)
-            
+
         return content
 
     @staticmethod
