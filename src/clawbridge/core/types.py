@@ -174,3 +174,17 @@ class SessionConfig(BaseModel):
     add_history_to_context: bool = True
     num_history_runs: int = 3
     reasoning: bool = False
+
+
+class TeamMode(StrEnum):
+    """Coordination mode for multi-agent teams.
+
+    - COORDINATE: Leader decomposes work, delegates to members, synthesizes results.
+    - ROUTE: Leader routes to a single specialist, returns their response directly.
+    - BROADCAST: Delegates the same task to all members, leader synthesizes.
+    - TASKS: Sequential task list execution until goal is complete.
+    """
+    COORDINATE = "coordinate"
+    ROUTE = "route"
+    BROADCAST = "broadcast"
+    TASKS = "tasks"

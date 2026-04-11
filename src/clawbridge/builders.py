@@ -104,6 +104,122 @@ def build_agno_agent(
     return AgnoBackend(agent, memory).compile()
 
 
+def build_agno_team(
+    team_config: "str | Path | Any",
+    *,
+    memory: ClawMemory | None = None,
+) -> Any:
+    """Build a native Agno Team from a TeamConfig or YAML file.
+
+    Each member ClawAgent is compiled into a native Agno Agent via AgnoBackend.
+    The resulting Team uses Agno's native coordination modes.
+    """
+    from clawbridge.core.team import TeamConfig
+
+    if isinstance(team_config, (str, Path)):
+        team_config = TeamConfig.from_yaml(team_config)
+
+    if not isinstance(team_config, TeamConfig):
+        raise TypeError(f"Expected TeamConfig, str, or Path, got {type(team_config)}")
+
+    # Compile each member ClawAgent → Agno Agent
+    compiled_members = []
+    for member in team_config.members:
+        loaded = load_agent_config(member)
+        compiled_members.append(AgnoBackend(loaded, memory).compile())
+
+    # Build Team kwargs
+    try:
+        from agno.team import Team
+        from agno.team.team import TeamMode as AgnoTeamMode
+    except ImportError:
+        raise ImportError(
+            "Agno is not installed. Run: pip install clawbridge[agno]"
+        )
+
+    team_kwargs: dict[str, Any] = {
+        "name": team_config.name,
+        "members": compiled_members,
+        "mode": AgnoTeamMode(team_config.mode.value),
+        "markdown": team_config.markdown,
+        "max_iterations": team_config.max_iterations,
+        "share_member_interactions": team_config.share_member_interactions,
+    }
+
+    if team_config.description:
+        team_kwargs["description"] = team_config.description
+    if team_config.role:
+        team_kwargs["role"] = team_config.role
+    if team_config.instructions:
+        team_kwargs["instructions"] = team_config.instructions
+
+    # Team coordinator model (optional — Agno falls back to member models)
+    if team_config.model is not None:
+        coordinator_backend = AgnoBackend(
+            ClawAgent(name="_coordinator", model=team_config.model)
+        )
+        team_kwargs["model"] = coordinator_backend._resolve_model()
+
+    # Storage / Db
+    if team_config.storage.enabled:
+        storage_backend = AgnoBackend(
+            ClawAgent(name="_storage", storage=team_config.storage)
+        )
+        db = storage_backend._build_db()
+        if db:
+            team_kwargs["db"] = db
+
+    # Hermes-like features on the Team
+    _apply_team_memory_config(team_config, team_kwargs)
+    _apply_team_learning_config(team_config, team_kwargs)
+    _apply_team_session_config(team_config, team_kwargs)
+
+    return Team(**team_kwargs)
+
+
+def _apply_team_memory_config(
+    config: Any,
+    kwargs: dict[str, Any],
+) -> None:
+    """Apply memory config to team kwargs."""
+    mode = config.agent_memory_mode
+    if mode == AgentMemoryMode.AUTOMATIC:
+        kwargs["update_memory_on_run"] = True
+        kwargs["enable_user_memories"] = True
+        kwargs["add_memories_to_context"] = True
+    elif mode == AgentMemoryMode.AGENTIC:
+        kwargs["enable_agentic_memory"] = True
+        kwargs["enable_user_memories"] = True
+        kwargs["add_memories_to_context"] = True
+
+
+def _apply_team_learning_config(
+    config: Any,
+    kwargs: dict[str, Any],
+) -> None:
+    """Apply learning config to team kwargs."""
+    if config.learning.enabled:
+        kwargs["learning"] = True
+        kwargs["add_learnings_to_context"] = config.learning.add_learnings_to_context
+
+
+def _apply_team_session_config(
+    config: Any,
+    kwargs: dict[str, Any],
+) -> None:
+    """Apply session config to team kwargs."""
+    sc = config.session
+    if sc.search_past_sessions:
+        kwargs["search_past_sessions"] = True
+        kwargs["num_past_sessions_to_search"] = sc.num_past_sessions_to_search
+    if sc.enable_session_summaries:
+        kwargs["enable_session_summaries"] = True
+    if sc.compress_tool_results:
+        kwargs["compress_tool_results"] = True
+    if sc.reasoning:
+        kwargs["reasoning"] = True
+
+
 def build_agentica_agent(
     agent_config: AgentSource,
     *,

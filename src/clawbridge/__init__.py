@@ -11,7 +11,7 @@ Usage:
     native_agent = build_agno_agent(agent)
 """
 
-from clawbridge.builders import build_agno_agent, build_agentica_agent, load_agent_config
+from clawbridge.builders import build_agno_agent, build_agno_team, build_agentica_agent, load_agent_config
 from clawbridge.core.agent import ClawAgent
 from clawbridge.core.channel import (
     ChannelMessageContext,
@@ -27,6 +27,7 @@ from clawbridge.core.channel import (
 )
 from clawbridge.core.memory import ClawMemory
 from clawbridge.core.multi_agent import MultiAgentConfig, MultiAgentDefinition
+from clawbridge.core.team import TeamConfig
 from clawbridge.core.prompt import OpenClawPromptBuilder, OpenClawPromptContext, OpenClawPromptMode
 from clawbridge.core.sandbox import (
     BrowserSandboxConfig,
@@ -60,6 +61,7 @@ from clawbridge.core.types import (
     MemoryConfig,
     ModelConfig,
     SessionConfig,
+    TeamMode,
     ToolDefinition,
     ToolParameter,
 )
@@ -70,6 +72,7 @@ __all__ = [
     "LearningConfig",
     "MultiAgentConfig",
     "MultiAgentDefinition",
+    "TeamConfig",
     "ChannelMessageContext",
     "ChannelPolicyDecision",
     "ChannelSessionPolicy",
@@ -109,10 +112,12 @@ __all__ = [
     "MemoryConfig",
     "ModelConfig",
     "SessionConfig",
+    "TeamMode",
     "ToolDefinition",
     "ToolParameter",
     "create_openclaw_workspace",
     "build_agno_agent",
+    "build_agno_team",
     "build_agentica_agent",
     "load_agent_config",
 ]
