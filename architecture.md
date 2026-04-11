@@ -1,14 +1,17 @@
+# Architecture
+
+```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     clawbridge (Meta-Layer)                     │
+│                     clawbridge (Toolkit)                        │
 │                                                                 │
 │  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────┐ │
 │  │ ClawAgent     │  │ ClawSkill    │  │ ClawMemory            │ │
-│  │ (universal    │  │ (SKILL.md    │  │ (persistent, cross-   │ │
-│  │  agent def)   │  │  compatible) │  │  session context)     │ │
+│  │ (OpenClaw     │  │ (SKILL.md    │  │ (persistent, cross-   │ │
+│  │  agent spec)  │  │  packages)   │  │  session context)     │ │
 │  └──────┬───────┘  └──────┬───────┘  └──────────┬────────────┘ │
 │         │                 │                      │              │
 │  ┌──────▼─────────────────▼──────────────────────▼────────────┐ │
-│  │              ClawBridge  (compile / emit)                   │ │
+│  │          builders.py  (load_agent_config / build)           │ │
 │  └──────┬──────────────────────────────┬──────────────────────┘ │
 │         │                              │                        │
 │  ┌──────▼──────────┐          ┌────────▼─────────────┐         │
@@ -22,3 +25,4 @@
     │ Agno SDK  │                 │ Agentica SDK│
     │  runtime  │                 │   runtime   │
     └───────────┘                 └─────────────┘
+```

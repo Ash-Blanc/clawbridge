@@ -4,10 +4,11 @@ from pathlib import Path
 
 from clawbridge import (
     ClawAgent,
-    ClawBridge,
+    ClawMemory,
     ClawSkill,
     ModelConfig,
     ToolDefinition,
+    build_agno_agent,
 )
 
 
@@ -23,13 +24,20 @@ def read_file(path: str) -> str:
     return Path(path).read_text()
 
 
+def fetch_url(url: str) -> str:
+    """Fetch content from a URL."""
+    import urllib.request
+    with urllib.request.urlopen(url) as resp:  # noqa: S310
+        return resp.read().decode(errors="replace")
+
+
 # 2. Load OpenClaw-format skills
 skills = []
 skill_dir = Path("./skills/web_search")
 if skill_dir.exists():
     skills.append(ClawSkill.from_skill_md(skill_dir))
 
-# 3. Define the agent (universal, framework-agnostic)
+# 3. Define the agent (OpenClaw-style spec)
 agent = ClawAgent(
     name="Molty",
     description="A personal AI assistant inspired by OpenClaw",
@@ -41,7 +49,7 @@ agent = ClawAgent(
     role="Personal assistant with web search and file management capabilities",
     model=ModelConfig(
         provider="anthropic",
-        model_id="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-20250514",
         api_key_env="ANTHROPIC_API_KEY",
     ),
     skills=skills,
@@ -56,25 +64,25 @@ agent = ClawAgent(
             description="Read a local file",
             callable=read_file,
         ),
+        ToolDefinition(
+            name="fetch_url",
+            description="Fetch content from a URL",
+            callable=fetch_url,
+        ),
     ],
     autonomous=True,
     markdown_output=True,
 )
 
-# 4. Deploy via Agno
-bridge = ClawBridge(agent, backend="agno")
-print(bridge)
-# → ClawBridge(agent='Molty', backend='agno', skills=1, tools=2)
+# 4. Build the native Agno agent
+native_agent = build_agno_agent(agent)
 
-# 5. Chat!
-response = bridge.chat("What's the latest on AI agents?")
-print(response)
+# 5. Run a query (requires ANTHROPIC_API_KEY at runtime)
+response = native_agent.run("What's the latest on AI agents?")
+print(getattr(response, "content", response))
 
-# 6. Memory persists
-bridge.memory.remember("user_name", "Alice", category="preference")
-bridge.memory.remember("timezone", "US/Pacific", category="preference")
-
-# 7. Hot-swap to Agentica backend (same agent, same memory!)
-bridge.switch_backend("agentica")
-response = bridge.chat("What's my name?")  # Memory carries over
-print(response)
+# 6. Memory helpers are separate from the runtime
+memory = ClawMemory()
+memory.remember("user_name", "Alice", category="preference")
+memory.remember("timezone", "US/Pacific", category="preference")
+print(memory.recall("user_name"))

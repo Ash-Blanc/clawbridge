@@ -250,7 +250,7 @@ def _cmd_init(args: argparse.Namespace) -> None:
     (project_dir / "knowledge").mkdir()
     
     # 1. Global config
-    config_yaml = """name: My ClawBridge Agno Deployment
+    config_yaml = """name: My OpenClaw Agno Deployment
 description: An optional Agno deployment helper using OpenClaw-style skills and prompts.
 server:
   host: 127.0.0.1
