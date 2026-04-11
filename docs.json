@@ -29,15 +29,22 @@
         ]
       },
       {
-        "group": "Basics",
+        "group": "Guides",
         "pages": [
-          "docs/concepts/agent-definition",
-          "docs/concepts/skills",
-          "docs/concepts/memory",
+          "docs/guides/hermes-features",
+          "docs/guides/teams",
           "docs/guides/building-openclaws",
           "docs/guides/building-skills",
           "docs/guides/memory-storage",
-          "docs/guides/hermes-features"
+          "docs/guides/gateways"
+        ]
+      },
+      {
+        "group": "Concepts",
+        "pages": [
+          "docs/concepts/agent-definition",
+          "docs/concepts/skills",
+          "docs/concepts/memory"
         ]
       },
       {
@@ -50,11 +57,10 @@
         ]
       },
       {
-        "group": "Advanced",
+        "group": "Backends",
         "pages": [
           "docs/backends/agno",
-          "docs/backends/agentica",
-          "docs/guides/gateways"
+          "docs/backends/agentica"
         ]
       }
     ]

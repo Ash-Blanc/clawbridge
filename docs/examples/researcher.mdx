@@ -1,23 +1,103 @@
 ---
 title: Personal Researcher
+description: "A research assistant with web search, note-taking, and a persistent knowledge base"
 ---
 
-# Researcher
+# Personal Researcher
 
-An Agno-oriented research assistant pattern using knowledge plus custom tools.
+A research assistant that searches the web, saves notes to Notion, and builds a personal knowledge base over time. Uses `tasks` mode in team configuration for structured multi-step research workflows.
 
-### Definition: `agents/scholar.yaml`
+## Agent definition
+
 ```yaml
+# agent.yaml
 name: Scholar
+description: Personal research assistant with search and note-taking tools
+personality: Thorough and organized. Always cites sources. Structures findings clearly with headers and bullet points.
+model:
+  provider: openai
+  model: gpt-4o
+storage:
+  enabled: true
+  type: sqlite
+  db_url: scholar.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
 knowledge:
   enabled: true
-  type: pgvector
-  db_url: postgresql://localhost/vector
+  type: lancedb
+  db_url: ./research_db
 ```
 
-### Skill: `skills/notion/tools.py`
+## Custom skill
+
 ```python
-def save_note(title: str, text: str) -> str:
-    """Saves to Notion."""
-    return f"Saved '{title}'."
+# skills/notion/tools.py
+
+def save_note(title: str, text: str, tags: list[str] | None = None) -> str:
+    """Save a research note to Notion.
+
+    Args:
+        title: Note title.
+        text: Note body in markdown.
+        tags: Optional list of tags for categorization.
+
+    Returns:
+        Confirmation string with the Notion page URL.
+    """
+    # In production, call the Notion API with your integration token
+    tag_str = ", ".join(tags or [])
+    return f"Saved '{title}' to Notion (tags: {tag_str}). URL: https://notion.so/page/..."
+
+
+def search_notes(query: str, limit: int = 5) -> list[dict]:
+    """Search existing notes by keyword.
+
+    Args:
+        query: Search query string.
+        limit: Maximum number of results to return.
+
+    Returns:
+        List of matching note dicts with title, snippet, and URL.
+    """
+    # In production, query Notion's search API
+    return [{"title": f"Note about {query}", "snippet": "...", "url": "https://notion.so/..."}]
+```
+
+## Run it
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+
+native_agent.print_response(
+    "Research the current state of open-source LLM fine-tuning and save a summary note"
+)
+```
+
+## As a team (tasks mode)
+
+For longer research workflows, use `tasks` mode to break the work into sequential phases:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team
+
+team = TeamConfig(
+    name="Research Pipeline",
+    mode=TeamMode.TASKS,
+    members=[
+        ClawAgent(name="Searcher", role="Find and retrieve sources from the web"),
+        ClawAgent(name="Analyst", role="Read and extract key insights from sources"),
+        ClawAgent(name="Writer", role="Synthesize insights into a structured report"),
+        ClawAgent(name="Archivist", role="Save the final report and update the knowledge base"),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Deep-dive research on MCP (Model Context Protocol) — what it is, who's using it, and what it means for agent tooling")
 ```

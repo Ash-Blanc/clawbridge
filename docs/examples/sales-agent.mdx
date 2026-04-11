@@ -1,28 +1,109 @@
 ---
 title: Sales Agent
+description: "A complete sales assistant combining skills, knowledge, storage, and team routing"
 ---
 
 # Sales Agent
 
-An Agno-oriented example that combines storage, knowledge, and channels.
+A complete example combining a custom skill, persistent memory, and a product knowledge base. Shows the single-agent pattern first, then how to scale it to a team.
 
-### Definition: `agents/sales.yaml`
+## Agent definition
+
 ```yaml
+# agent.yaml
 name: Acme Sales
-personality: Enthusiastic closer.
+description: Sales assistant for Acme Corp
+personality: Enthusiastic but professional. Always backs claims with data.
+model:
+  provider: openai
+  model: gpt-4o
 storage:
+  enabled: true
   type: sqlite
+  db_url: sales.db
+agent_memory_mode: automatic
 knowledge:
+  enabled: true
   type: lancedb
-  sources: ["https://acmecorp.com/catalog"]
-channels:
-  - type: slack
-    token_env: SLACK_TOKEN
+  db_url: ./knowledge_db
+  sources:
+    - https://acmecorp.com/catalog
 ```
 
-### Skill: `skills/pricing/tools.py`
+## Custom skill
+
 ```python
-def quote(price: float, qty: int) -> str:
-    """Calculates discounted price."""
-    return f"Total: ${price * qty * 0.9 if qty > 10 else price * qty}"
+# skills/pricing/tools.py
+
+def calculate_quote(unit_price: float, quantity: int, discount_pct: float = 0) -> str:
+    """Calculate a price quote with optional volume discount.
+
+    Args:
+        unit_price: Price per unit in USD.
+        quantity: Number of units requested.
+        discount_pct: Discount percentage to apply (0–100).
+
+    Returns:
+        Formatted quote string with subtotal, discount, and total.
+    """
+    subtotal = unit_price * quantity
+    discount = subtotal * (discount_pct / 100)
+    total = subtotal - discount
+    return (
+        f"Quote: {quantity}x @ ${unit_price:.2f} = ${subtotal:.2f}"
+        f" - ${discount:.2f} discount = ${total:.2f}"
+    )
+
+
+def check_inventory(product_id: str) -> str:
+    """Check current inventory for a product SKU.
+
+    Args:
+        product_id: The product SKU to look up.
+
+    Returns:
+        Availability string with unit count.
+    """
+    # In production, wire to your inventory API
+    return f"Product {product_id}: 142 units in stock"
+```
+
+## Run it
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+
+native_agent.print_response(
+    "I need a quote for 50 units of WIDGET-100 at $29.99 each with a 10% volume discount"
+)
+```
+
+Expected output:
+```
+Quote: 50x @ $29.99 = $1499.50 - $149.95 discount = $1349.55
+```
+
+## As a team
+
+For larger sales operations, use `route` mode to dispatch inquiries to specialists:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, ModelConfig, build_agno_team
+
+team = TeamConfig(
+    name="Sales Team",
+    mode=TeamMode.ROUTE,
+    members=[
+        ClawAgent(name="Quoter", role="Handle pricing calculations and quote requests"),
+        ClawAgent(name="Support", role="Answer product questions and check inventory"),
+        ClawAgent(name="Closer", role="Handle objections and negotiate terms"),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("What's the lead time on 200 units of WIDGET-100?")
+# Routes to Support automatically
 ```

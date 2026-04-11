@@ -1,65 +1,110 @@
 ---
 title: Quickstart
-description: "Get a workspace-backed OpenClaw agent running in a few minutes"
+description: "Install clawbridge, scaffold a workspace, and run a memory-backed agent in minutes"
 ---
 
 # Quickstart
 
-## What you will build
+By the end of this page you'll have a workspace-backed agent with persistent memory running on Agno.
 
-By the end of this page, you will have:
+## 1. Install
 
-- one OpenClaw workspace
-- one running agent
-- one model connection
-- one place to add memory and skills next
-
-### 1. Install
-
-```bash
-uv sync --extra all
+<CodeGroup>
+```bash pip
+pip install "clawbridge[agno]"
 ```
 
-### 2. Set your API key
+```bash uv
+uv add "clawbridge[agno]"
+```
+</CodeGroup>
+
+## 2. Set your API key
 
 ```bash
 export ANTHROPIC_API_KEY="sk-..."
 ```
 
-### 3. Create a workspace
+Agno reads `ANTHROPIC_API_KEY` from the environment automatically — no extra config needed.
+
+## 3. Scaffold a workspace
 
 ```bash
 clawbridge scaffold ./my-workspace
-cd ./my-workspace
+cd my-workspace
 ```
 
-This gives you:
+This creates:
 
-- the standard workspace files like `AGENTS.md`, `MEMORY.md`, and `BOOTSTRAP.md`
-- a starter skill in `skills/hello_world/`
-- an `agent.yaml` that `clawbridge` can load directly
+```
+my-workspace/
+├── AGENTS.md          # Agent identity and behavioral rules
+├── MEMORY.md          # Memory conventions for the workspace
+├── BOOTSTRAP.md       # Startup instructions and context
+├── agent.yaml         # Starter agent definition
+└── skills/
+    └── hello_world/   # A working example skill
+        ├── SKILL.md
+        └── tools.py
+```
 
-### 4. Run the starter agent
+All three markdown files are loaded into the agent's system prompt automatically when you run with `workspace_path: .`.
+
+## 4. Run the starter agent
 
 ```python
 from clawbridge import build_agno_agent, load_agent_config
 
 agent = load_agent_config("./agent.yaml")
 native_agent = build_agno_agent(agent)
-response = native_agent.run("What can you do?")
-print(getattr(response, "content", response))
+native_agent.print_response("What can you do?")
 ```
+
+`load_agent_config` reads the YAML, resolves the workspace files, and returns a `ClawAgent`. `build_agno_agent` compiles it into a native Agno `Agent`.
+
+## 5. Enable persistent memory
+
+Open `agent.yaml` and add the storage and memory fields:
+
+```yaml
+name: Assistant
+workspace_path: .
+personality: Pragmatic, concise, and reliable.
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic
+```
+
+Re-run the agent:
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+native_agent.print_response("My name is Alex. Remember that.")
+
+# In a new session:
+native_agent.print_response("What's my name?")
+# → "Your name is Alex."
+```
+
+The agent now extracts facts from conversations and recalls them across sessions using `agent.db`.
 
 ## What you just built
 
-- a `ClawAgent`
-- a workspace-backed prompt
-- a native Agno agent
+- A `ClawAgent` backed by a workspace directory
+- Workspace files (`AGENTS.md`, `MEMORY.md`, `BOOTSTRAP.md`) compiled into the system prompt
+- A hello_world skill loaded automatically from `skills/`
+- Persistent SQLite memory — the agent remembers across sessions
 
 ## Next steps
 
-- add a skill directory
-- try the CLI
-- move on to guides and examples
-
-Framework-specific deployment details come later in the docs.
+- [Add Skills](/docs/getting-started/add-skills) — write custom tool functions and load them
+- [Hermes Features](/docs/guides/hermes-features) — learning, session recall, and memory modes
+- [Teams](/docs/guides/teams) — coordinate multiple specialized agents

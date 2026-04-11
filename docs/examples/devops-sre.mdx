@@ -1,25 +1,93 @@
 ---
-title: DevOps Agent
+title: DevOps / SRE Agent
+description: "A cautious operational agent with approval gates and persistent incident memory"
 ---
 
-# DevOps Agent
+# DevOps / SRE Agent
 
-An Agno-oriented pattern for cautious operational tooling.
+An operational agent that combines infrastructure tools with persistent memory for incident tracking. The key pattern here is cautious tooling: destructive actions require explicit confirmation, and incident context persists across sessions.
 
-### Definition: `agents/ops.yaml`
+## Agent definition
+
 ```yaml
+# agent.yaml
 name: OpsBot
-personality: Cautious engineer.
+description: SRE assistant with infrastructure tools
+personality: Cautious and methodical. Always explains what it is about to do before doing it. Never runs destructive commands without explicit user confirmation.
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
 storage:
-  type: postgres
-channels:
-  - type: slack
-    token_env: SLACK_TOKEN
+  enabled: true
+  type: sqlite
+  db_url: ops.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
 ```
 
-### Skill: `skills/aws/tools.py`
+## Custom skill
+
 ```python
-def reboot(instance_id: str) -> str:
-    """Reboots EC2 instance."""
-    return f"Rebooting {instance_id}..."
+# skills/aws/tools.py
+
+def reboot_instance(instance_id: str, dry_run: bool = True) -> str:
+    """Reboot an EC2 instance. Dry-run by default for safety.
+
+    Args:
+        instance_id: The EC2 instance ID (e.g. i-0abc123def456).
+        dry_run: If True, validate permissions only without rebooting.
+
+    Returns:
+        Status message describing what happened or would happen.
+    """
+    if dry_run:
+        return f"Dry run: would reboot {instance_id}. Pass dry_run=False to execute."
+    # In production, call boto3 here
+    return f"Rebooting {instance_id}... ETA 90 seconds."
+
+
+def get_instance_status(instance_id: str) -> str:
+    """Get the current status of an EC2 instance.
+
+    Args:
+        instance_id: The EC2 instance ID.
+
+    Returns:
+        JSON-formatted status string with state, health checks, and uptime.
+    """
+    return f'{{"instance_id": "{instance_id}", "state": "running", "health": "ok"}}'
+```
+
+## Run it
+
+```python
+from clawbridge import build_agno_agent, load_agent_config
+
+agent = load_agent_config("./agent.yaml")
+native_agent = build_agno_agent(agent)
+
+native_agent.print_response("i-0abc123def456 is unreachable. What should I check first?")
+```
+
+## As a team
+
+Split the SRE workflow between a diagnostician and an executor to keep destructive actions behind a human-in-the-loop coordinator:
+
+```python
+from clawbridge import ClawAgent, TeamConfig, TeamMode, build_agno_team
+
+team = TeamConfig(
+    name="SRE Team",
+    mode=TeamMode.COORDINATE,
+    members=[
+        ClawAgent(name="Diagnostician", role="Gather metrics, logs, and status. Never runs write operations."),
+        ClawAgent(name="Executor", role="Execute remediation steps only after explicit approval from the coordinator."),
+    ],
+)
+
+native_team = build_agno_team(team)
+native_team.print_response("Production API latency spiked to 4s. Investigate and remediate.")
 ```
