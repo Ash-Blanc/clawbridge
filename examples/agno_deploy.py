@@ -86,3 +86,21 @@ memory = ClawMemory()
 memory.remember("user_name", "Alice", category="preference")
 memory.remember("timezone", "US/Pacific", category="preference")
 print(memory.recall("user_name"))
+
+# ── Hermes-Like Configuration ──
+# To enable persistent memory, learning, and cross-session recall,
+# add these to your ClawAgent:
+#
+# from clawbridge import AgentMemoryMode, LearningConfig, SessionConfig, StorageConfig
+#
+# agent = ClawAgent(
+#     name="Molty",
+#     ...
+#     storage=StorageConfig(enabled=True, type="sqlite", db_url="agent.db"),
+#     agent_memory_mode=AgentMemoryMode.AUTOMATIC,
+#     learning=LearningConfig(enabled=True),
+#     session=SessionConfig(
+#         search_past_sessions=True,
+#         enable_session_summaries=True,
+#     ),
+# )

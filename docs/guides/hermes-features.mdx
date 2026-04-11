@@ -1,0 +1,77 @@
+---
+title: Hermes-Like Features
+description: "Persistent memory, learning, and cross-session recall"
+---
+
+# Hermes-Like Features
+
+`clawbridge` supports the patterns that make agents like [Hermes-agent](https://github.com/nousresearch/hermes-agent) compelling:
+
+1. **Persistent memory** — the agent remembers user preferences across sessions
+2. **Self-improvement** — the agent learns from past interactions
+3. **Cross-session recall** — the agent searches past conversations for context
+
+These features are available today through the Agno backend.
+
+## Prerequisites
+
+All Hermes-like features require persistent storage:
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+```
+
+## Persistent Memory
+
+```yaml
+agent_memory_mode: automatic
+```
+
+Or give the agent full control:
+
+```yaml
+agent_memory_mode: agentic
+```
+
+## Self-Improvement
+
+```yaml
+learning:
+  enabled: true
+```
+
+The agent stores learnings from runs and applies them to future sessions.
+
+## Cross-Session Recall
+
+```yaml
+session:
+  search_past_sessions: true
+  enable_session_summaries: true
+```
+
+## Full Configuration
+
+```yaml
+name: Molty
+description: A self-improving personal assistant
+personality: Helpful and learns from every interaction.
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
+  enable_session_summaries: true
+  compress_tool_results: true
+  reasoning: true
+```
