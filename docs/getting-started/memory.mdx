@@ -54,9 +54,9 @@ native_agent.print_response("What's my favorite language?")
 
 | Mode | Behavior |
 |---|---|
-| `AUTOMATIC` | Agent decides when to store and retrieve memories |
-| `ALWAYS` | Store and retrieve on every turn |
-| `NEVER` | Disable persistent memory |
+| `OFF` | Only use `ClawMemory` for prompt injection (default) |
+| `AUTOMATIC` | Framework extracts and stores memories after each run |
+| `AGENTIC` | Agent gets memory tools and decides when to remember or forget |
 
 ### YAML equivalent
 
