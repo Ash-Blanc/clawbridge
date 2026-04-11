@@ -1,40 +1,132 @@
 ---
 title: Agent Definition
-description: "The OpenClaw-style agent spec in clawbridge"
+description: "The ClawAgent model — every field explained"
 ---
 
 # Agent Definition
 
-`ClawAgent` is the main OpenClaw-style agent spec in `clawbridge`.
+`ClawAgent` is the central configuration model. It defines everything about your agent in a framework-agnostic way, then builders compile it into native objects.
 
-It groups three kinds of configuration:
+## Minimal definition
 
-## Shared OpenClaw fields
+```python
+from clawbridge import ClawAgent, build_agno_agent
 
-These fields describe the agent regardless of which builder you use:
+agent = ClawAgent(name="Molty")
+native_agent = build_agno_agent(agent)
+```
 
-- identity: `name`, `description`, `personality`, `role`
-- model config: `provider`, `model`, API key wiring
-  `provider` accepts first-class values like `anthropic`, `openai`, and `mistral`, plus arbitrary LiteLLM-compatible provider strings
-- tools and skills: direct `ToolDefinition` values plus `ClawSkill`
-- prompt composition: `system_prompt`, `additional_instructions`
-- memory helpers: `memory_config`
-- workspace loading: `workspace_path`, `workspace`
-- sandbox and channel policy: `sandbox`, `channel_policy`
-- agent memory mode: `off`, `automatic`, or `agentic` — controls native persistent memory
-- learning: self-improvement configuration for cross-session learning
-- session: cross-session recall, summaries, context compression, reasoning
+Or in YAML:
 
-## Framework-specific extensions
+```yaml
+name: Molty
+```
 
-These fields are meaningful, but their behavior depends on the selected framework:
+Every field has a sensible default. Start minimal, add fields as needed.
 
-- `storage`
-- `knowledge`
-- `channels`
+## Identity fields
 
-Use them when you need native framework capabilities, but do not assume identical behavior across Agno and Agentica.
+```yaml
+name: Molty
+description: A personal research assistant
+personality: Pragmatic and concise. Cites sources.
+role: Research assistant
+```
 
-## Prompt assembly
+These fields are injected into the system prompt's Identity section.
 
-The prompt builder composes identity, tooling, workspace context, memory, sandbox state, runtime state, and extra instructions in a fixed OpenClaw-style order.
+## Model configuration
+
+```yaml
+model:
+  provider: anthropic          # openai, anthropic, groq, mistral, deepseek, or any LiteLLM string
+  model: claude-sonnet-4-20250514
+  temperature: 0.7
+  max_tokens: 4096
+```
+
+Agno reads API keys from standard environment variables (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, etc.) automatically.
+
+## Skills and tools
+
+Skills are loaded from directories. Tools are defined inline:
+
+```yaml
+skill_paths:
+  - ./extra-skills
+tools:
+  - name: get_weather
+    description: Get current weather
+```
+
+Tools defined in YAML are schema-only — you must provide the callable in Python via `ClawAgent.tools`. For most cases, use skill directories with `tools.py` instead.
+
+## Workspace
+
+```yaml
+workspace_path: .
+```
+
+Points to an OpenClaw workspace directory. The builder loads `AGENTS.md`, `MEMORY.md`, skills, and other workspace files automatically.
+
+## Hermes-like features
+
+```yaml
+agent_memory_mode: automatic   # off | automatic | agentic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
+  enable_session_summaries: true
+  compress_tool_results: true
+  reasoning: true
+  num_history_runs: 5
+```
+
+These require `storage.enabled: true` to function. See [Hermes Features](/docs/guides/hermes-features).
+
+## Storage and knowledge
+
+```yaml
+storage:
+  enabled: true
+  type: sqlite                 # in_memory | sqlite | postgres
+  db_url: agent.db
+knowledge:
+  enabled: true
+  type: lancedb                # lancedb | pgvector
+  db_url: ./knowledge_db
+  sources:
+    - https://example.com/docs
+```
+
+## Framework-specific fields
+
+These work with Agno but not necessarily with other backends:
+
+- `storage` — database for session history, memory, learning
+- `knowledge` — vector knowledge base
+- `channels` — messaging platform connections (Slack, WhatsApp)
+
+## Full YAML example
+
+```yaml
+name: Molty
+description: A self-improving personal assistant
+personality: Helpful and learns from every interaction.
+role: Personal assistant
+model:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+workspace_path: .
+storage:
+  enabled: true
+  type: sqlite
+  db_url: agent.db
+agent_memory_mode: automatic
+learning:
+  enabled: true
+session:
+  search_past_sessions: true
+  enable_session_summaries: true
+```

@@ -5,22 +5,73 @@ description: "OpenClaw skills from SKILL.md or code-first directories"
 
 # Skills
 
-`clawbridge` supports two skill styles:
+`clawbridge` supports two skill styles and a precedence system for loading them.
 
-## `SKILL.md` packages
+## SKILL.md packages
 
-OpenClaw-style skills use:
+OpenClaw-style skills use YAML frontmatter for metadata and tool schemas, and a markdown body for agent instructions:
 
-- YAML frontmatter for metadata and tool schema
-- Markdown body for agent instructions
+```markdown
+---
+name: web-search
+description: Search the web for current information
+tools:
+  - name: search_web
+    description: Search the web using DuckDuckGo
+    parameters:
+      - name: query
+        type: string
+        description: The search query
+        required: true
+---
+# Skill: Web Search
 
-`ClawSkill.from_skill_md()` parses both and converts them into a reusable `ClawSkill`.
+Always cite sources. Prefer recent results.
+```
 
-## Code-first skill directories
+Load it:
 
-If a directory contains `tools.py` or `main.py` but no `SKILL.md`, `clawbridge` will auto-generate a skill from discovered callables.
+```python
+from pathlib import Path
+from clawbridge import ClawSkill, ClawAgent, build_agno_agent
 
-This is useful for fast local iteration, but it carries less human-readable structure than a full `SKILL.md`.
+skill = ClawSkill.from_skill_md(Path("./skills/web_search"))
+agent = ClawAgent(name="Molty", skills=[skill])
+native_agent = build_agno_agent(agent)
+native_agent.print_response("Find me recent papers on transformer architectures")
+```
+
+## Code-first directories
+
+A directory with `tools.py` and no `SKILL.md` is auto-discovered. Tool metadata comes from type hints and docstrings:
+
+```python
+# skills/calculator/tools.py
+def add(a: int, b: int) -> int:
+    """Add two numbers."""
+    return a + b
+```
+
+```python
+from pathlib import Path
+from clawbridge import ClawSkill, ClawAgent, build_agno_agent
+
+skill = ClawSkill.from_dir(Path("./skills/calculator"))
+agent = ClawAgent(name="Molty", skills=[skill])
+native_agent = build_agno_agent(agent)
+native_agent.print_response("What is 15 + 27?")
+```
+
+## Skill precedence
+
+When the same skill name appears in multiple locations, workspace skills win:
+
+| Priority | Source | Example |
+|---|---|---|
+| Highest | Workspace `skills/` | `./skills/search/` |
+| | Managed (user-level) | `~/.clawbridge/skills/search/` |
+| | Bundled (built-in) | Package bundled skills |
+| Lowest | Extra paths | Explicit `skill_paths` |
 
 ## Wiring rule
 

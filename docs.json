@@ -60,7 +60,8 @@
         "group": "Backends",
         "pages": [
           "docs/backends/agno",
-          "docs/backends/agentica"
+          "docs/backends/agentica",
+          "docs/guides/app-mode"
         ]
       }
     ]
