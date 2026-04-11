@@ -1,7 +1,7 @@
 # GEMINI.md - clawbridge Project Context
 
 ## Project Overview
-**clawbridge** is a Python meta-framework that enables developers to define AI agents using [OpenClaw](https://github.com/openclaw/openclaw)-inspired patterns—such as portable skills (`SKILL.md`), persistent cross-session memory, and standardized agent definitions—and deploy them seamlessly to mainstream agent frameworks like [Agno](https://github.com/agno-agi/agno) and [Agentica](https://github.com/symbolica-ai/agentica-python-sdk).
+**clawbridge** is a Python toolkit for building OpenClaw-style agents inside existing frameworks such as Agno and Agentica. It supports portable skills (`SKILL.md`), persistent cross-session memory, and standardized agent definitions that compile into framework-native objects via builder functions.
 
 ### Key Technologies
 - **Python 3.12+**: Utilizes modern Python features and type hinting.
@@ -13,8 +13,8 @@
 - **CLI**: Built with `rich` for a polished terminal experience.
 
 ### Architecture
-- `ClawAgent`: A universal, framework-agnostic Pydantic model defining the agent's identity, model, skills, tools, and behavior.
-- `ClawBridge`: The central orchestrator that compiles a `ClawAgent` into a backend-specific native agent and manages interaction.
+- `ClawAgent`: An OpenClaw-style Pydantic model defining the agent's identity, model, skills, tools, and behavior.
+- `builders.py`: Framework-native entry points (`build_agno_agent()`, `build_agentica_agent()`, `load_agent_config()`) that compile a `ClawAgent` into a backend-specific native object.
 - `ClawSkill`: Handles parsing of `SKILL.md` files (YAML frontmatter + Markdown instructions) and extracts tool definitions.
 - `ClawMemory`: A framework-independent persistence layer providing long-term facts/preferences and short-term conversation history, backed by local JSON storage.
 - `ClawBackend`: An abstract protocol implemented by framework adapters (`AgnoBackend`, `AgenticaBackend`).
@@ -58,13 +58,12 @@ uv sync --extra all
 - **Type Safety**: Mandatory type hints for all public APIs. Use `from __future__ import annotations`.
 - **Validation**: Use Pydantic models for all configuration and state objects (`ClawAgent`, `ModelConfig`, etc.).
 - **Lazy Imports**: Backend-specific dependencies (like `agno` or `agentica`) must be lazily imported within backend classes to avoid requiring all users to install every framework.
-- **Extensibility**: Follow the `ClawBackend` protocol when adding new frameworks. Register new backends via `ClawBridge.register_backend()`.
+- **Extensibility**: Follow the `ClawBackend` protocol when adding new frameworks.
 
 ### Project Structure
 - `src/clawbridge/core/`: Core universal models (agent, memory, skill, tool).
 - `src/clawbridge/backends/`: Framework-specific adapters.
 - `src/clawbridge/skills/`: Logic for loading and registering skills from disk or remote sources.
-- `src/clawbridge/bridge.py`: The main `ClawBridge` class and convenience factories.
 - `examples/`: Deployment scripts for various frameworks.
 
 ### Skill System

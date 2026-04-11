@@ -1,0 +1,18 @@
+{
+  "user_name": {
+    "key": "user_name",
+    "value": "Alice",
+    "category": "preference",
+    "timestamp": 1775927827.5148554,
+    "session_id": null,
+    "ttl": null
+  },
+  "timezone": {
+    "key": "timezone",
+    "value": "US/Pacific",
+    "category": "preference",
+    "timestamp": 1775927827.5151155,
+    "session_id": null,
+    "ttl": null
+  }
+}

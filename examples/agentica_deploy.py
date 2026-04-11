@@ -1,8 +1,6 @@
 """Example: Deploy via Agentica with type-safe scope objects."""
 
-import asyncio
-
-from clawbridge import ClawAgent, ClawBridge, ModelConfig, ToolDefinition
+from clawbridge import ClawAgent, ModelConfig, ToolDefinition, build_agentica_agent
 
 
 class DataAnalyzer:
@@ -24,24 +22,21 @@ agent = ClawAgent(
     description="A data analysis assistant",
     model=ModelConfig(
         provider="anthropic",
-        model_id="claude-sonnet-4-20250514",
+        model="claude-sonnet-4-20250514",
     ),
     tools=[
         ToolDefinition(
             name="analyzer",
             description="Data analysis toolkit",
-            callable=analyzer,  # Pass the live object!
+            callable=analyzer,
         ),
     ],
 )
 
-bridge = ClawBridge(agent, backend="agentica")
+# Build the Agentica config — returns scope-based config rather than a long-lived runtime
+agentica_config = build_agentica_agent(agent)
 
-
-async def main():
-    # Agentica excels at letting agents interact with live objects
-    response = await bridge.achat("Analyze the sales data in data/sales.csv")
-    print(response)
-
-
-asyncio.run(main())
+# Agentica uses scope objects — show the compiled config
+print(f"Agent: {agent.name}")
+print(f"Scope objects: {list(agentica_config.scope.keys())}")
+print(f"Model: {agentica_config.model}")
